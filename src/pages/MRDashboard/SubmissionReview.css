@@ -1,0 +1,267 @@
+/* pages/MRDashboard/SubmissionReview.css */
+
+.submission-container {
+  padding: 24px;
+  background: #0a0a0a;
+  min-height: 100vh;
+}
+
+/* Header */
+.submission-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+/* Statistics Cards */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.stat-card {
+  background: #151515;
+  border: 1px solid #222;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+}
+
+.stat-card h2 {
+  margin: 8px 0 0 0;
+}
+
+/* Tabs */
+.submission-tabs {
+  margin: 24px 0;
+}
+
+.submission-tabs [role="tablist"] {
+  background: #151515;
+  border: 1px solid #222;
+  border-radius: 6px;
+  padding: 4px;
+}
+
+.submission-tabs [role="tab"] {
+  padding: 8px 16px;
+  border-radius: 4px;
+  color: #888;
+}
+
+.submission-tabs [role="tab"][data-state="active"] {
+  background: #222;
+  color: #fff;
+}
+
+/* Filters */
+.filters-card {
+  background: #151515;
+  border: 1px solid #222;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 24px 0;
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.filter-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.search-input {
+  width: 100%;
+}
+
+/* Submissions Table */
+.submissions-card {
+  background: #151515;
+  border: 1px solid #222;
+  border-radius: 8px;
+  padding: 0;
+  overflow: hidden;
+  margin: 24px 0;
+}
+
+.submissions-card table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.submissions-card th {
+  background: #1a1a1a;
+  border-bottom: 1px solid #222;
+  padding: 16px;
+  text-align: left;
+  font-weight: 500;
+  color: #ccc;
+}
+
+.submissions-card td {
+  padding: 16px;
+  border-bottom: 1px solid #222;
+}
+
+.submission-row:hover {
+  background: #1a1a1a;
+}
+
+.submission-row:last-child td {
+  border-bottom: none;
+}
+
+/* Table Footer */
+.table-footer {
+  border-top: 1px solid #222;
+  padding: 16px 24px;
+}
+
+/* Empty Table */
+.empty-table {
+  text-align: center;
+  padding: 60px;
+  color: #666;
+}
+
+.empty-table svg {
+  color: #444;
+  margin-bottom: 12px;
+}
+
+/* Form Statistics */
+.stats-summary-card {
+  background: #151515;
+  border: 1px solid #222;
+  border-radius: 8px;
+  padding: 24px;
+  margin-top: 24px;
+}
+
+.form-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.form-stat-card {
+  background: #1a1a1a;
+  border: 1px solid #222;
+  border-radius: 6px;
+  padding: 16px;
+}
+
+.progress-bar {
+  height: 4px;
+  background: #222;
+  border-radius: 2px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #3b82f6;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+/* Details Dialog */
+.details-dialog {
+  background: #151515;
+  border: 1px solid #222;
+  color: #fff;
+}
+
+.details-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .submission-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .filter-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .submissions-card {
+    overflow-x: auto;
+  }
+  
+  .submissions-card table {
+    min-width: 1000px;
+  }
+}
+
+@media (max-width: 768px) {
+  .submission-container {
+    padding: 16px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .submission-tabs [role="tablist"] {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .table-footer {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+}
+
+/* Status Colors */
+.badge[data-color="green"] {
+  background: #14532d;
+  color: #4ade80;
+}
+
+.badge[data-color="red"] {
+  background: #7f1d1d;
+  color: #f87171;
+}
+
+.badge[data-color="amber"] {
+  background: #78350f;
+  color: #fbbf24;
+}
+
+.badge[data-color="blue"] {
+  background: #1e3a8a;
+  color: #60a5fa;
+}
