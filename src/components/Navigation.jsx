@@ -25,6 +25,7 @@ const Navigation = ({ children }) => {
     { path: '/mr-dashboard/projects', icon: <CubeIcon />, label: 'Projects', key: 'projects' },
     { path: '/mr-dashboard/notifications', icon: <BellIcon />, label: 'Notifications', key: 'notifications' },
     { path: '/mr-dashboard/analytics', icon: <BarChartIcon />, label: 'Analytics', key: 'analytics' },
+    { path: '/mr-dashboard/projects', icon: <BarChartIcon />, label: 'Projects', key: 'projects' },
   ];
 
   return (

@@ -21,7 +21,8 @@ import {
 } from '@radix-ui/react-icons';
 import { Link } from 'react-router-dom';
 import './MRDashboard.css';
-import { getProjects, getReportingForms, getSubmissions } from '../../api/datacollection';
+import { getProjects, getReportingForms,  } from '../../api/datacollection';
+import {logoutUser} from '../../api/auth'
 const MRDashboard = () => {
   const [stats, setStats] = useState({
     activeForms: 0,
@@ -43,45 +44,29 @@ const MRDashboard = () => {
     { id: 4, project: 'Dire Dawa Industrial Park', action: 'reminder sent for Weekly Report', time: '2 days ago' },
   ]);
 
-  // useEffect(() => {
-  //   // Mock API call to fetch dashboard stats
-  //   const fetchDashboardStats = async () => {
-  //     // Simulating API delay
-  //     await new Promise(resolve => setTimeout(resolve, 500));
-      
-  //     setStats({
-  //       activeForms: 12,
-  //       formsSent: 45,
-  //       pendingSubmissions: 18,
-  //       completedSubmissions: 27,
-  //     });
-  //   };
-
-  //   fetchDashboardStats();
-  // }, []);
+ 
 
 useEffect(() => {
-  console.log("🚀 Dashboard loaded → fetching PUBLISHED forms");
-
-  async function loadPublishedForms() {
-    try {
-      const res = await getReportingForms("Published");
-
-      const forms = res.data || [];
-      console.log("✅ Published forms received:", forms.length);
-
-      setStats(prev => ({
-        ...prev,
-        activeForms: forms.length,
-      }));
-
-    } catch (error) {
-      console.error("❌ Failed to load published forms:", error);
-    }
-  }
-
-  loadPublishedForms();
+  getReportingForms()
+    .then(forms => {
+      console.log("Forms loaded:", forms);
+      const activeForms = forms.filter(form => form.status === 'Published').length;
+     
+      setStats(prevStats => ({ ...prevStats, activeForms }));
+       console.log(activeForms,"Active Forms")
+      const pendingForms = forms.filter(form => form.status === 'Draft').length;
+      setStats(prevStats => ({ ...prevStats, pendingForms }));
+       console.log(pendingForms, "pending forms")
+      const completedForms = forms.filter(form => form.status === 'Closed').length;
+     
+      setStats(prevStats => ({ ...prevStats, completedForms }));
+        console.log(completedForms, "completed forms")
+    })
+    .catch(err => {
+      console.error("Error loading forms:", err);
+    });
 }, []);
+
 
 
 
@@ -103,6 +88,17 @@ useEffect(() => {
                 <Heading size="7" mb="1">Data Collection Dashboard</Heading>
                 <Text size="2" color="gray">Overview of forms and submissions</Text>
               </Box>
+              <Button
+                  variant="outline"
+                  color="red"
+                  onClick={async () => {
+                    await logoutUser();
+                    // Redirect to login page after logout
+                    window.location.href = "/";
+                  }}
+                >
+                  Logout
+                </Button>
             </Flex>
 
             {/* Stats Cards */}
@@ -132,7 +128,7 @@ useEffect(() => {
                     </div>
                     <Text size="2" color="gray">Forms Sent</Text>
                   </Flex>
-                  <Heading size="7">{stats.formsSent}</Heading>
+                  <Heading size="7">{stats.activeForms}</Heading>
                   <Text size="1" color="gray">Total forms distributed</Text>
                 </Flex>
               </Card>
@@ -145,8 +141,8 @@ useEffect(() => {
                     </div>
                     <Text size="2" color="gray">Pending</Text>
                   </Flex>
-                  <Heading size="7">{stats.pendingSubmissions}</Heading>
-                  <Text size="1" color="gray">Awaiting submission</Text>
+                  <Heading size="7">{stats.pendingForms}</Heading>
+                  <Text size="1" color="gray">Awaiting Distribution</Text>
                 </Flex>
               </Card>
 
@@ -158,8 +154,8 @@ useEffect(() => {
                     </div>
                     <Text size="2" color="gray">Completed</Text>
                   </Flex>
-                  <Heading size="7">{stats.completedSubmissions}</Heading>
-                  <Text size="1" color="gray">Forms submitted</Text>
+                  <Heading size="7">{stats.completedForms}</Heading>
+                  <Text size="1" color="gray">Closed Forms</Text>
                 </Flex>
               </Card>
             </Grid>
@@ -224,31 +220,7 @@ useEffect(() => {
                 </Flex>
               </Card>
 
-              {/* Recent Activity */}
-              <Card>
-                <Flex direction="column" gap="4">
-                  <Heading size="4">Recent Activity</Heading>
-                  <div className="activity-list">
-                    {recentActivity.map((activity) => (
-                      <div key={activity.id} className="activity-item">
-                        <Flex justify="between" align="center">
-                          <Flex direction="column" gap="1">
-                            <Text weight="medium">
-                              <span className="text-blue-500">{activity.project}</span>
-                              <span className="text-gray-500"> {activity.action}</span>
-                            </Text>
-                            <Text size="1" color="gray">{activity.time}</Text>
-                          </Flex>
-                          <ChevronRightIcon className="text-gray-400" />
-                        </Flex>
-                      </div>
-                    ))}
-                  </div>
-                  <Button variant="soft" className="view-all-btn">
-                    View All Activity
-                  </Button>
-                </Flex>
-              </Card>
+             
             </Grid>
           </Container>
         </div>

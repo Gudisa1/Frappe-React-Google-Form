@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+// pages/FormBuilder.jsx
+import React, { useEffect, useState } from 'react';
 import {
   Card,
   Flex,
@@ -38,8 +39,9 @@ import {
   InfoCircledIcon
 } from '@radix-ui/react-icons';
 import Navigation from '../../components/Navigation';
-import * as DataCollectionAPI from '../../api/datacollection';
 import './FormBuilder.css';
+
+import { getProjects,createReportingForm,updateReportingForm } from '../../api/datacollection';
 
 const FormBuilder = () => {
   // Form metadata
@@ -47,15 +49,18 @@ const FormBuilder = () => {
   const [formDescription, setFormDescription] = useState('');
   const [reportingPeriod, setReportingPeriod] = useState('');
   const [year, setYear] = useState(new Date().getFullYear().toString());
-  // Add this with other state variables
-const [isEditing, setIsEditing] = useState(false);
-const [currentFormName, setCurrentFormName] = useState(null);
+  
+  // Edit state
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentFormName, setCurrentFormName] = useState(null);
+  
   // Questions
   const [questions, setQuestions] = useState([]);
   const [draggedQuestion, setDraggedQuestion] = useState(null);
   
-  // Projects
-  const [allProjects, setAllProjects] = useState([]);
+  // Projects - Using mock data instead of API
+const [allProjects, setAllProjects] = useState([]);
+  
   const [selectedProjects, setSelectedProjects] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -67,7 +72,8 @@ const [currentFormName, setCurrentFormName] = useState(null);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [lastSavedForm, setLastSavedForm] = useState(null);
   
-  // Question types mapping to Frappe field types
+
+  // Question types mapping
   const questionTypes = [
     { id: 'Data', label: 'Short Text', icon: <TextIcon />, color: '#3B82F6' },
     { id: 'Int', label: 'Integer', icon: <SymbolIcon />, color: '#6366F1' },
@@ -78,8 +84,7 @@ const [currentFormName, setCurrentFormName] = useState(null);
     { id: 'Check', label: 'Checkbox', icon: <CheckboxIcon />, color: '#F59E0B' },
     { id: 'Attach', label: 'File Upload', icon: <UploadIcon />, color: '#84CC16' },
   ];
-  
-  // Reporting period options
+
   const reportingPeriodOptions = [
     { value: 'Q1', label: 'Quarter 1' },
     { value: 'Q2', label: 'Quarter 2' },
@@ -87,28 +92,34 @@ const [currentFormName, setCurrentFormName] = useState(null);
     { value: 'Q4', label: 'Quarter 4' },
     { value: 'Other', label: 'Other' }
   ];
-  
-  // Fetch projects on component mount
-  useEffect(() => {
-    fetchProjects();
-  }, []);
-  
-  const fetchProjects = async () => {
+
+  // Gudisa
+
+ useEffect(() => {
+    async function fetchAllProjects() {
     try {
       setIsLoading(true);
-      const projects = await DataCollectionAPI.getProjects();
-      setAllProjects(projects);
-      console.log("✅ Loaded projects:", projects.length);
+      const projects = await getProjects(); // your API function
+      console.log("📦 Projects loaded:", projects);
+      setAllProjects(projects); // update state
+      console.log("✅ Projects state updated", projects);
     } catch (error) {
       console.error("❌ Failed to load projects:", error);
-      setSaveStatus({ 
-        type: 'error', 
-        message: 'Failed to load projects. Please check your connection.' 
-      });
     } finally {
       setIsLoading(false);
     }
-  };
+  }
+
+  fetchAllProjects();
+}, []);
+
+
+
+  
+  // Reporting period options
+ 
+  
+  // No useEffect for fetching projects - using mock data instead
   
   // Add new question
   const addQuestion = (typeId) => {
@@ -282,8 +293,170 @@ const [currentFormName, setCurrentFormName] = useState(null);
     }
   };
   
-  // Save form to Frappe
-  // Save form to Frappe
+  // // Save form - Mock implementation without API
+  // const saveForm = async (action = 'Draft') => {
+  //   console.log(`💾 Saving form as ${action}...`);
+  //   console.log('📋 Form data:', {
+  //     title: formTitle,
+  //     description: formDescription,
+  //     reportingPeriod,
+  //     year,
+  //     questions,
+  //     selectedProjects
+  //   });
+    
+  //   // Validation
+  //   if (!formTitle.trim()) {
+  //     setSaveStatus({ type: 'error', message: 'Please enter a form title' });
+  //     return;
+  //   }
+    
+  //   if (!reportingPeriod) {
+  //     setSaveStatus({ type: 'error', message: 'Please select a reporting period' });
+  //     return;
+  //   }
+    
+  //   if (questions.length === 0) {
+  //     setSaveStatus({ type: 'error', message: 'Please add at least one question' });
+  //     return;
+  //   }
+    
+  //   if (selectedProjects.length === 0) {
+  //     setSaveStatus({ type: 'error', message: 'Please select at least one project' });
+  //     return;
+  //   }
+    
+  //   setIsLoading(true);
+  //   setSaveStatus(null);
+  //   try {
+  //     // ============ BUILD EXACT PAYLOAD AS PER YOUR EXAMPLE ============
+      
+  //     // 1. Main form data
+  //     const payload = {
+  //       doctype: "Reporting Form",
+  //       form_title: formTitle,
+  //       reporting_period: reportingPeriod,
+  //       year: parseInt(year),
+  //       status: action === 'Published' ? 'Published' : 'Draft'
+  //     };
+      
+  //     // Add description only if provided (optional field)
+  //     if (formDescription.trim()) {
+  //       payload.description = formDescription;
+  //     }
+      
+  //     // 2. Fields child table (questions)
+  //     payload.fields = questions.map((question) => {
+  //       // Handle options for Select/Check fields (join with newlines)
+  //       let options = '';
+  //       if ((question.type === 'Select' || question.type === 'Check') && question.options?.length > 0) {
+  //         options = question.options.join('\n');
+  //       }
+        
+  //       const field = {
+  //         doctype: "Reporting Form Field",
+  //         parentfield: "fields",
+  //         label: question.label,
+  //         field_type: question.type,
+  //         required: question.required ? 1 : 0,
+  //         options: options
+  //       };
+        
+  //       // Add description if exists
+  //       if (question.description?.trim()) {
+  //         field.description = question.description;
+  //       }
+        
+  //       return field;
+  //     });
+      
+  //     // 3. Target projects child table
+  //     payload.target_projects = selectedProjects.map((project) => ({
+  //       doctype: "Reporting Form Target",
+  //       parentfield: "target_projects",
+  //       project: project.name,
+  //       project_name: project.project_name,
+  //       include: 1
+  //     }));
+      
+  //     console.log('📦 Final Payload:', JSON.stringify(payload, null, 2));
+      
+  //     // ============ MAKE THE FETCH REQUEST ============
+      
+  //     // Determine URL and method
+  //     let url = '/api/resource/Reporting Form';
+  //     let method = 'POST';
+      
+  //     if (isEditing && currentFormName) {
+  //       // Update existing form
+  //       url = `/api/resource/Reporting Form/${currentFormName}`;
+  //       method = 'PUT';
+  //     }
+      
+  //     console.log(`🌐 Fetch ${method} ${url}`);
+      
+  //     // Make the fetch request
+  //     const response = await fetch(url, {
+  //       method: method,
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Accept': 'application/json'
+  //       },
+  //       body: JSON.stringify(payload),
+  //       credentials: 'include' // Important for session/cookie auth
+  //     });
+      
+  //     // Parse response
+  //     const result = await response.json();
+  //     console.log('📥 API Response:', result);
+      
+  //     // Check if request was successful
+  //     if (!response.ok) {
+  //       throw new Error(result.message || result.exception || `HTTP error ${response.status}`);
+  //     }
+      
+  //     // Get the form name from response (matches your exact response structure)
+  //     const formName = result.data?.name || result.name;
+      
+  //     // Success!
+  //     setSaveStatus({ 
+  //       type: 'success', 
+  //       message: `Form "${formTitle}" ${action === 'Published' ? 'published' : 'saved as draft'} successfully!` 
+  //     });
+      
+  //     // Store last saved form info
+  //     setLastSavedForm({
+  //       name: formName,
+  //       title: formTitle,
+  //       fieldsCount: questions.length,
+  //       projectsCount: selectedProjects.length,
+  //       status: action === 'Published' ? 'Published' : 'Draft'
+  //     });
+      
+  //     // Set editing state
+  //     setCurrentFormName(formName);
+  //     setIsEditing(true);
+      
+  //     // Show success dialog for published forms
+  //     if (action === 'Published') {
+  //       setShowSuccessDialog(true);
+  //     }
+      
+  //     // Scroll to top
+  //     window.scrollTo({ top: 0, behavior: 'smooth' });
+      
+  //   } catch (error) {
+  //    console.error('❌ Failed to save form:', error);
+  //     setSaveStatus({ 
+  //       type: 'error', 
+  //       message: `Failed to save form: ${error.message}` 
+  //     });
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+  
+  
 const saveForm = async (action = 'Draft') => {
   console.log(`💾 Saving form as ${action}...`);
   
@@ -312,84 +485,106 @@ const saveForm = async (action = 'Draft') => {
   setSaveStatus(null);
   
   try {
-    let result;
+    // ============ BUILD EXACT PAYLOAD AS PER YOUR EXAMPLE ============
     
-    if (action === 'Publish' && isEditing && currentFormName) {
-      // CASE 1: Publishing an existing draft form - ONLY update status
-      console.log('📌 Publishing existing form:', currentFormName);
-      result = await DataCollectionAPI.publishForm(currentFormName);
-      
-      setSaveStatus({ 
-        type: 'success', 
-        message: 'Form published successfully!' 
-      });
-      
-      setLastSavedForm({
-        name: currentFormName,
-        title: formTitle,
-        fieldsCount: questions.length,
-        projectsCount: selectedProjects.length,
-        status: 'Published'
-      });
-      
-      setShowSuccessDialog(true);
-      
-    } else {
-      // CASE 2: Creating a new form (either Draft or Publish)
-      const formData = {
-        title: formTitle,
-        description: formDescription,
-        reportingPeriod: reportingPeriod,
-        year: parseInt(year),
-        status: action // 'Draft' or 'Published'
-      };
-      
-      console.log('🚀 Creating new form in Frappe...');
-      console.log('📊 Action:', action);
-      
-      result = await DataCollectionAPI.createCompleteReportingForm(
-        formData,
-        questions,
-        selectedProjects
-      );
-      
-      console.log('✅ Form saved successfully!', result);
-      
-      setSaveStatus({ 
-        type: 'success', 
-        message: result.message || `Form ${action === 'Draft' ? 'saved as draft' : 'published'} successfully!` 
-      });
-      
-      setLastSavedForm({
-        name: result.data?.formName,
-        title: formTitle,
-        fieldsCount: result.data?.fieldsCount,
-        projectsCount: result.data?.projectsCount,
-        status: action
-      });
-      
-      // Store form name for potential future publishing
-      setCurrentFormName(result.data?.formName);
-      setIsEditing(true);
-      
-      if (action === 'Published') {
-        setShowSuccessDialog(true);
-      }
+    // 1. Main form data
+    const payload = {
+      doctype: "Reporting Form",
+      form_title: formTitle,
+      reporting_period: reportingPeriod,
+      year: parseInt(year),
+      status: action === 'Published' ? 'Published' : 'Draft'
+    };
+    
+    // Add description only if provided (optional field)
+    if (formDescription.trim()) {
+      payload.description = formDescription;
     }
     
-    // NAVIGATION: After successful save (draft or publish), redirect to assign forms page
-    setTimeout(() => {
-      window.location.href = '/mr-dashboard/assign'; // or whatever your assign forms route is
-    }, 1500);
+    // 2. Fields child table (questions)
+    payload.fields = questions.map((question) => {
+      // Handle options for Select/Check fields (join with newlines)
+      let options = '';
+      if ((question.type === 'Select' || question.type === 'Check') && question.options?.length > 0) {
+        options = question.options.join('\n');
+      }
+      
+      const field = {
+        doctype: "Reporting Form Field",
+        parentfield: "fields",
+        label: question.label,
+        field_type: question.type,
+        required: question.required ? 1 : 0,
+        options: options
+      };
+      
+      // Add description if exists
+      if (question.description?.trim()) {
+        field.description = question.description;
+      }
+      
+      return field;
+    });
     
-    // Scroll to top to show success message
+    // 3. Target projects child table
+    payload.target_projects = selectedProjects.map((project) => ({
+      doctype: "Reporting Form Target",
+      parentfield: "target_projects",
+      project: project.name,
+      project_name: project.project_name,
+      include: 1
+    }));
+    
+    console.log('📦 Final Payload:', JSON.stringify(payload, null, 2));
+    
+    // ============ CALL THE APPROPRIATE API FUNCTION ============
+    
+    let result;
+    if (isEditing && currentFormName) {
+      // Update existing form
+      result = await updateReportingForm(currentFormName, payload);
+    } else {
+      // Create new form
+      result = await createReportingForm(payload);
+    }
+    
+    console.log('📥 API Response:', result);
+    
+    // Get the form name from response
+    const formName = result.data?.name || result.name;
+    
+    // Success!
+    setSaveStatus({ 
+      type: 'success', 
+      message: `Form "${formTitle}" ${action === 'Published' ? 'published' : 'saved as draft'} successfully!` 
+    });
+    
+    // Store last saved form info
+    setLastSavedForm({
+      name: formName,
+      title: formTitle,
+      fieldsCount: questions.length,
+      projectsCount: selectedProjects.length,
+      status: action === 'Published' ? 'Published' : 'Draft'
+    });
+    
+    // Set editing state
+    setCurrentFormName(formName);
+    setIsEditing(true);
+    
+    // Show success dialog for published forms
+    if (action === 'Published') {
+      setShowSuccessDialog(true);
+    }
+    
+    // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
     
   } catch (error) {
     console.error('❌ Failed to save form:', error);
     setSaveStatus({ 
       type: 'error', 
-      message: `Failed to save form: ${error.message || 'Unknown error'}` 
+      message: `Failed to save form: ${error.message}` 
     });
   } finally {
     setIsLoading(false);
@@ -404,6 +599,9 @@ const saveForm = async (action = 'Draft') => {
     setQuestions([]);
     setSelectedProjects([]);
     setSaveStatus(null);
+    setIsEditing(false);
+    setCurrentFormName(null);
+    setLastSavedForm(null);
   };
   
   // Filter projects based on search
@@ -525,22 +723,22 @@ const saveForm = async (action = 'Draft') => {
             >
               <EyeOpenIcon /> Preview
             </Button>
-           <Button 
-  onClick={() => {
-    if (isEditing && currentFormName) {
-      // If form already exists, just publish it
-      saveForm('Publish');
-    } else {
-      // If new form, create and publish
-      saveForm('Published');
-    }
-  }}
-  disabled={isLoading}
-  color="green"
-  variant="solid"
->
-  {isLoading ? 'Publishing...' : <><PaperPlaneIcon /> Publish Form</>}
-</Button>
+            <Button 
+              onClick={() => {
+                if (isEditing && currentFormName) {
+                  // If form already exists, just publish it
+                  saveForm('Published');
+                } else {
+                  // If new form, create and publish
+                  saveForm('Published');
+                }
+              }}
+              disabled={isLoading}
+              color="green"
+              variant="solid"
+            >
+              {isLoading ? 'Publishing...' : <><PaperPlaneIcon /> Publish Form</>}
+            </Button>
           </Flex>
         </div>
 
@@ -561,7 +759,6 @@ const saveForm = async (action = 'Draft') => {
                     variant="soft" 
                     size="1"
                     onClick={() => setShowProjectsDialog(true)}
-                    disabled={allProjects.length === 0}
                   >
                     <PlusIcon /> Assign Projects ({selectedProjects.length})
                   </Button>

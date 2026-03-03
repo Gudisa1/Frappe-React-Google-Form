@@ -21,6 +21,12 @@ const LoginPage = () => {
       if (roles.includes("M&R Manager")) {
         navigate("/mr-dashboard"); // Page for M&R Manager
       } else if (roles.includes("Project Manager")) {
+        const pmDetails = {
+        name: currentUser.full_name,      // full name of the user
+        email: currentUser.email,         // email
+        roles: currentUser.roles
+        };
+        localStorage.setItem("projectManager", JSON.stringify(pmDetails));
         navigate("/project-dashboard"); // Page for Project Manager
       } else if (roles.includes("Director")) {
         navigate("/director-dashboard"); // Page for Director

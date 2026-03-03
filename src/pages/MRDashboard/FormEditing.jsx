@@ -1,927 +1,186 @@
-// pages/MRDashboard/FormEditing.jsx
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  Flex,
-  Text,
-  Heading,
-  Button,
-  Table,
-  Badge,
-  Dialog,
-  AlertDialog,
-  Container,
-  Separator,
-  Tabs,
-  Box,
-  TextField,
-  TextArea,
-  Select,
-  Switch
-} from '@radix-ui/themes';
-import {
-  ClockIcon,
-    CopyIcon,
-  TrashIcon,
-  EyeOpenIcon,
-  DownloadIcon,
-  ChevronRightIcon,
-  FileTextIcon,
-  ExclamationTriangleIcon,
-  CheckCircledIcon,
-  Pencil1Icon,
-  PlusIcon,
-  ArrowLeftIcon
-} from '@radix-ui/react-icons';
-import Navigation from '../../components/Navigation';
-import './FormEditing.css';
+import { useParams } from 'react-router-dom';
+import { getProjects, getSingleReportingForm, updateReportingForm } from '../../api/datacollection';
+
+export const ALLOWED_FIELD_TYPES = [
+  'Data','Small Text','Int','Float','Currency','Date','Datetime','Time','Select','Check','Rating'
+];
+
+const REPORTING_PERIODS = ['Q1', 'Q2', 'Q3', 'Q4', 'Other'];
+const STATUS_OPTIONS = ['Draft', 'Published', 'Closed'];
 
 const FormEditing = () => {
-  const [activeTab, setActiveTab] = useState('forms');
-  const [selectedForm, setSelectedForm] = useState(null);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [showVersionDialog, setShowVersionDialog] = useState(false);
-  const [showUpdateWarning, setShowUpdateWarning] = useState(false);
-  const [editingForm, setEditingForm] = useState(null);
-  const [newQuestion, setNewQuestion] = useState('');
-  const [versionNote, setVersionNote] = useState('');
+  const { formName } = useParams();
+  const [formTitle, setFormTitle] = useState('');
+  const [reportingPeriod, setReportingPeriod] = useState('Q1');
+  const [year, setYear] = useState(new Date().getFullYear());
+  const [status, setStatus] = useState('Draft');
 
-  // Mock data - forms
-  const [forms, setForms] = useState([
-    {
-      id: '1',
-      title: 'Site Inspection Form',
-      description: 'Daily site inspection checklist',
-      category: 'Safety',
-      createdDate: '2024-01-01',
-      lastModified: '2024-01-15',
-      status: 'active',
-      submissions: 24,
-      versions: 3,
-      questions: [
-        { id: 'q1', text: 'Project Name', type: 'text', required: true },
-        { id: 'q2', text: 'Site Safety Status', type: 'multiple-choice', required: true },
-        { id: 'q3', text: 'Inspection Date', type: 'date', required: true },
-      ]
-    },
-    {
-      id: '2',
-      title: 'Weekly Progress Report',
-      description: 'Weekly project progress updates',
-      category: 'Progress',
-      createdDate: '2024-01-05',
-      lastModified: '2024-01-12',
-      status: 'active',
-      submissions: 18,
-      versions: 2,
-      questions: [
-        { id: 'q1', text: 'Progress Percentage', type: 'number', required: true },
-        { id: 'q2', text: 'Challenges Faced', type: 'paragraph', required: false },
-      ]
-    },
-    {
-      id: '3',
-      title: 'Material Delivery Checklist',
-      description: 'Track material deliveries to site',
-      category: 'Logistics',
-      createdDate: '2024-01-03',
-      lastModified: '2024-01-10',
-      status: 'draft',
-      submissions: 0,
-      versions: 1,
-      questions: [
-        { id: 'q1', text: 'Material Type', type: 'text', required: true },
-        { id: 'q2', text: 'Delivery Date', type: 'date', required: true },
-      ]
-    },
-    {
-      id: '4',
-      title: 'Quality Assurance Form',
-      description: 'Quality control checkpoints',
-      category: 'Quality',
-      createdDate: '2023-12-20',
-      lastModified: '2024-01-08',
-      status: 'archived',
-      submissions: 12,
-      versions: 4,
-      questions: [
-        { id: 'q1', text: 'Quality Rating', type: 'rating', required: true },
-        { id: 'q2', text: 'Issues Found', type: 'checkbox', required: false },
-      ]
-    },
-  ]);
+  const [fields, setFields] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [selectedProjects, setSelectedProjects] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [showPreview, setShowPreview] = useState(false);
 
-  // Mock data - versions
-  const [versions, setVersions] = useState({
-    '1': [
-      {
-        id: 'v1.3',
-        version: '1.3',
-        date: '2024-01-15',
-        author: 'Admin User',
-        changes: 'Added safety compliance questions',
-        note: 'Enhanced safety section',
-        submissions: 10
-      },
-      {
-        id: 'v1.2',
-        version: '1.2',
-        date: '2024-01-10',
-        author: 'Admin User',
-        changes: 'Fixed date format validation',
-        note: 'Bug fixes',
-        submissions: 8
-      },
-      {
-        id: 'v1.1',
-        version: '1.1',
-        date: '2024-01-05',
-        author: 'Admin User',
-        changes: 'Added project details section',
-        note: 'Initial revisions',
-        submissions: 6
-      },
-      {
-        id: 'v1.0',
-        version: '1.0',
-        date: '2024-01-01',
-        author: 'Admin User',
-        changes: 'Initial form creation',
-        note: 'First version',
-        submissions: 0
-      },
-    ],
-    '2': [
-      {
-        id: 'v2.1',
-        version: '2.1',
-        date: '2024-01-12',
-        author: 'Admin User',
-        changes: 'Added progress percentage field',
-        note: 'Enhanced metrics',
-        submissions: 5
-      },
-      {
-        id: 'v2.0',
-        version: '2.0',
-        date: '2024-01-05',
-        author: 'Admin User',
-        changes: 'Initial form creation',
-        note: 'First version',
-        submissions: 0
-      },
-    ]
-  });
+  // Load projects
+  useEffect(() => {
+    getProjects().then((res) => {
+      const projectsArray = res.data || [];
+      setProjects(projectsArray);
 
-  // Select form for editing
-  const selectForm = (form) => {
-    setSelectedForm(form);
-    setEditingForm({ ...form });
-    setActiveTab('edit');
-  };
-
-  // Create new version
-  const createNewVersion = () => {
-    if (!versionNote.trim()) {
-      alert('Please add a version note');
-      return;
-    }
-
-    const newVersion = {
-      id: `v${selectedForm.versions + 1}.0`,
-      version: `${selectedForm.versions + 1}.0`,
-      date: new Date().toISOString().split('T')[0],
-      author: 'Current User',
-      changes: 'Form updated',
-      note: versionNote,
-      submissions: 0
-    };
-
-    // Update form
-    const updatedForms = forms.map(f => 
-      f.id === selectedForm.id 
-        ? { 
-            ...f, 
-            versions: f.versions + 1,
-            lastModified: new Date().toISOString().split('T')[0]
-          }
-        : f
-    );
-
-    // Update versions
-    const updatedVersions = {
-      ...versions,
-      [selectedForm.id]: [newVersion, ...(versions[selectedForm.id] || [])]
-    };
-
-    setForms(updatedForms);
-    setVersions(updatedVersions);
-    setVersionNote('');
-    setShowVersionDialog(false);
-    
-    alert(`New version ${selectedForm.versions + 1}.0 created successfully!`);
-  };
-
-  // Duplicate form
-  const duplicateForm = (formId) => {
-    const formToDuplicate = forms.find(f => f.id === formId);
-    if (formToDuplicate) {
-      const newForm = {
-        ...formToDuplicate,
-        id: Date.now().toString(),
-        title: `${formToDuplicate.title} (Copy)`,
-        status: 'draft',
-        submissions: 0,
-        versions: 1,
-        createdDate: new Date().toISOString().split('T')[0],
-        lastModified: new Date().toISOString().split('T')[0]
-      };
-      setForms([...forms, newForm]);
-      alert('Form duplicated successfully!');
-    }
-  };
-
-  // Delete form
-  const deleteForm = (formId) => {
-    if (forms.find(f => f.id === formId).submissions > 0) {
-      alert('Cannot delete form with existing submissions');
-      return;
-    }
-    setForms(forms.filter(f => f.id !== formId));
-    setShowDeleteDialog(false);
-    alert('Form deleted successfully!');
-  };
-
-  // Update question
-  const updateQuestion = (questionId, updates) => {
-    if (!editingForm) return;
-    
-    const updatedQuestions = editingForm.questions.map(q =>
-      q.id === questionId ? { ...q, ...updates } : q
-    );
-    
-    setEditingForm({
-      ...editingForm,
-      questions: updatedQuestions
+      const initialSelected = {};
+      projectsArray.forEach((p) => (initialSelected[p.project_name] = false));
+      setSelectedProjects(initialSelected);
     });
-  };
+  }, []);
 
-  // Add new question
-  const addNewQuestion = () => {
-    if (!newQuestion.trim()) {
-      alert('Please enter question text');
-      return;
-    }
+  // Load existing form data
+  useEffect(() => {
+    if (!formName) return;
+    const fetchForm = async () => {
+      try {
+        const data = await getSingleReportingForm(formName);
+        setFormTitle(data.form_title);
+        setReportingPeriod(data.reporting_period);
+        setYear(data.year);
+        setStatus(data.status);
 
-    const newQuestionObj = {
-      id: `q${Date.now()}`,
-      text: newQuestion,
-      type: 'text',
-      required: false
+        // Map fields
+        setFields(
+          data.fields.map(f => ({
+            field_name: f.field_name,
+            label: f.label,
+            field_type: f.field_type,
+            required: !!f.required,
+            value: f.value || ''
+          }))
+        );
+
+        // Map selected projects
+        const initialSelected = {};
+        projects.forEach(p => {
+          const matched = data.target_projects.find(tp => tp.project_name === p.project_name);
+          initialSelected[p.project_name] = !!matched;
+        });
+        setSelectedProjects(prev => ({ ...prev, ...initialSelected }));
+      } catch (err) {
+        alert('Failed to fetch form: ' + err.message);
+      } finally {
+        setLoading(false);
+      }
     };
+    fetchForm();
+  }, [formName, projects]);
 
-    setEditingForm({
-      ...editingForm,
-      questions: [...editingForm.questions, newQuestionObj]
-    });
-    setNewQuestion('');
+  const addField = () => setFields([...fields, { field_name:'', label:'', field_type:'', required:false, value:'' }]);
+  const removeField = (index) => setFields(fields.filter((_, i) => i !== index));
+
+  const validateFields = () => {
+    if (!formTitle) { alert('Form title is required'); return false; }
+    for (let f of fields) {
+      if (!f.field_name || !f.label) { alert('All fields must have field_name and label'); return false; }
+      if (!ALLOWED_FIELD_TYPES.includes(f.field_type)) { alert(`Invalid field type "${f.field_type}"`); return false; }
+    }
+    if (!Object.values(selectedProjects).some(v => v)) { alert('Select at least one project'); return false; }
+    return true;
   };
 
-  // Remove question
-  const removeQuestion = (questionId) => {
-    setEditingForm({
-      ...editingForm,
-      questions: editingForm.questions.filter(q => q.id !== questionId)
-    });
-  };
+  const handleSubmit = async () => {
+    if (!validateFields()) return;
 
-  // Save form edits
-  const saveFormEdits = () => {
-    const updatedForms = forms.map(f =>
-      f.id === editingForm.id ? { ...f, ...editingForm } : f
-    );
-    setForms(updatedForms);
-    
-    if (editingForm.submissions > 0) {
-      setShowUpdateWarning(true);
-    } else {
-      alert('Form updated successfully!');
-      setActiveTab('forms');
-      setSelectedForm(null);
-      setEditingForm(null);
+    const target_projects = projects
+      .filter(p => selectedProjects[p.project_name])
+      .map(p => ({ project: p.project_name, project_name: p.project_name, include: 'Yes' }));
+
+    const formData = { form_title: formTitle, reporting_period: reportingPeriod, year, status, fields, target_projects };
+
+    try {
+      await updateReportingForm(formName, formData);
+      alert('Reporting Form updated successfully!');
+      setShowPreview(false);
+    } catch (err) {
+      alert('Failed to update form: ' + err.message);
     }
   };
 
-  // Send updated form to projects
-  const sendUpdatedForm = () => {
-    // In real app, this would send notifications to assigned projects
-    alert('Updated form sent to all assigned projects!');
-    setShowUpdateWarning(false);
-    setActiveTab('forms');
-    setSelectedForm(null);
-    setEditingForm(null);
-  };
-
-  // Get status color
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'active': return 'green';
-      case 'draft': return 'blue';
-      case 'archived': return 'gray';
-      default: return 'gray';
-    }
-  };
-
-  // Get type badge
-  const getTypeBadge = (type) => {
-    const typeMap = {
-      'text': { label: 'Text', color: 'blue' },
-      'paragraph': { label: 'Paragraph', color: 'green' },
-      'multiple-choice': { label: 'Multiple Choice', color: 'purple' },
-      'checkbox': { label: 'Checkbox', color: 'amber' },
-      'date': { label: 'Date', color: 'cyan' },
-      'number': { label: 'Number', color: 'indigo' },
-      'rating': { label: 'Rating', color: 'pink' }
-    };
-    
-    const info = typeMap[type] || { label: 'Unknown', color: 'gray' };
-    return <Badge color={info.color} variant="soft">{info.label}</Badge>;
-  };
+  if (loading) return <div>Loading form...</div>;
 
   return (
-    <Navigation>
-      <Container size="3" className="form-editing-container">
-        {/* Header with Tabs */}
-        <div className="editing-header">
-          {activeTab === 'forms' ? (
-            <>
-              <div>
-                <Heading size="7">Form Editing</Heading>
-                <Text size="2" color="gray">Update forms and track version history</Text>
-              </div>
-              
-              <Button 
-                variant="soft"
-                onClick={() => {
-                  // Create new form
-                  console.log('Create new form');
-                }}
-              >
-                <PlusIcon /> New Form
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  setActiveTab('forms');
-                  setSelectedForm(null);
-                  setEditingForm(null);
-                }}
-              >
-                <ArrowLeftIcon /> Back to Forms
-              </Button>
-              
-              <Heading size="5">
-                {selectedForm?.title}
-                <Badge 
-                  color={getStatusColor(selectedForm?.status)} 
-                  variant="soft" 
-                  ml="2"
-                >
-                  {selectedForm?.status}
-                </Badge>
-              </Heading>
-            </>
-          )}
+    <div style={{ padding: 20 }}>
+      <h2>Update Reporting Form</h2>
+
+      <div style={{ marginBottom: 10 }}>
+        <input placeholder="Form Title" value={formTitle} onChange={e => setFormTitle(e.target.value)} />
+      </div>
+
+      <div style={{ marginBottom: 10 }}>
+        <select value={reportingPeriod} onChange={e => setReportingPeriod(e.target.value)}>
+          {REPORTING_PERIODS.map(p => <option key={p} value={p}>{p}</option>)}
+        </select>
+      </div>
+
+      <div style={{ marginBottom: 10 }}>
+        <input type="number" placeholder="Year" value={year} onChange={e => setYear(Number(e.target.value))} />
+      </div>
+
+      <div style={{ marginBottom: 10 }}>
+        <select value={status} onChange={e => setStatus(e.target.value)}>
+          {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+      </div>
+
+      <h3>Fields</h3>
+      {fields.map((f, i) => (
+        <div key={i} style={{ marginBottom:10, border:'1px solid #ccc', padding:10 }}>
+          <input placeholder="Field Name" value={f.field_name} onChange={e => setFields(fields.map((fld,j) => j===i ? {...fld, field_name:e.target.value}:fld))} />
+          <input placeholder="Label" value={f.label} onChange={e => setFields(fields.map((fld,j) => j===i ? {...fld, label:e.target.value}:fld))} />
+          <select value={f.field_type} onChange={e => setFields(fields.map((fld,j) => j===i ? {...fld, field_type:e.target.value}:fld))}>
+            <option value="">Select Field Type</option>
+            {ALLOWED_FIELD_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+          <label>
+            <input type="checkbox" checked={f.required} onChange={e => setFields(fields.map((fld,j) => j===i ? {...fld, required:e.target.checked}:fld))} /> Required
+          </label>
+          <button onClick={() => removeField(i)}>Remove</button>
         </div>
+      ))}
+      <button onClick={addField}>Add Field</button>
 
-        {/* Forms List View */}
-        {activeTab === 'forms' && (
-          <>
-            <div className="stats-grid">
-              <Card className="stat-card">
-                <Flex direction="column" gap="2">
-                  <Text size="2" color="gray">Total Forms</Text>
-                  <Heading size="6">{forms.length}</Heading>
-                </Flex>
-              </Card>
-              
-              <Card className="stat-card">
-                <Flex direction="column" gap="2">
-                  <Text size="2" color="gray">Active Forms</Text>
-                  <Heading size="6" color="green">
-                    {forms.filter(f => f.status === 'active').length}
-                  </Heading>
-                </Flex>
-              </Card>
-              
-              <Card className="stat-card">
-                <Flex direction="column" gap="2">
-                  <Text size="2" color="gray">Total Submissions</Text>
-                  <Heading size="6">
-                    {forms.reduce((sum, f) => sum + f.submissions, 0)}
-                  </Heading>
-                </Flex>
-              </Card>
-              
-              <Card className="stat-card">
-                <Flex direction="column" gap="2">
-                  <Text size="2" color="gray">Total Versions</Text>
-                  <Heading size="6">
-                    {forms.reduce((sum, f) => sum + f.versions, 0)}
-                  </Heading>
-                </Flex>
-              </Card>
-            </div>
+      <h3>Select Projects</h3>
+      {projects.map(p => (
+        <label key={p.project_name} style={{ display:'block' }}>
+          <input type="checkbox" checked={selectedProjects[p.project_name]||false} onChange={e => setSelectedProjects({...selectedProjects, [p.project_name]:e.target.checked})} />
+          {p.project_name}
+        </label>
+      ))}
 
-            <Separator size="4" />
+      <button onClick={() => setShowPreview(true)} style={{ marginTop:20 }}>Preview & Update</button>
 
-            {/* Forms Table */}
-            <Card className="forms-table-card">
-              <Table.Root>
-                <Table.Header>
-                  <Table.Row>
-                    <Table.ColumnHeaderCell>Form Title</Table.ColumnHeaderCell>
-                    <Table.ColumnHeaderCell>Category</Table.ColumnHeaderCell>
-                    <Table.ColumnHeaderCell>Status</Table.ColumnHeaderCell>
-                    <Table.ColumnHeaderCell>Questions</Table.ColumnHeaderCell>
-                    <Table.ColumnHeaderCell>Submissions</Table.ColumnHeaderCell>
-                    <Table.ColumnHeaderCell>Versions</Table.ColumnHeaderCell>
-                    <Table.ColumnHeaderCell>Last Modified</Table.ColumnHeaderCell>
-                    <Table.ColumnHeaderCell>Actions</Table.ColumnHeaderCell>
-                  </Table.Row>
-                </Table.Header>
+      {showPreview && (
+        <div style={{ position:'fixed', top:0,left:0,right:0,bottom:0, background:'rgba(0,0,0,0.5)', display:'flex', justifyContent:'center', alignItems:'center' }}>
+          <div style={{ background:'white', padding:20, maxWidth:600, width:'100%' }}>
+            <h3>Preview Reporting Form</h3>
+            <p><strong>Title:</strong> {formTitle}</p>
+            <p><strong>Reporting Period:</strong> {reportingPeriod}</p>
+            <p><strong>Year:</strong> {year}</p>
+            <p><strong>Status:</strong> {status}</p>
 
-                <Table.Body>
-                  {forms.map((form) => (
-                    <Table.Row key={form.id} className="form-row">
-                      <Table.Cell>
-                        <Text weight="medium">{form.title}</Text>
-                        <Text size="2" color="gray">{form.description}</Text>
-                      </Table.Cell>
-                      
-                      <Table.Cell>
-                        <Badge variant="soft">{form.category}</Badge>
-                      </Table.Cell>
-                      
-                      <Table.Cell>
-                        <Badge color={getStatusColor(form.status)} variant="soft">
-                          {form.status.charAt(0).toUpperCase() + form.status.slice(1)}
-                        </Badge>
-                      </Table.Cell>
-                      
-                      <Table.Cell>
-                        <Text>{form.questions.length}</Text>
-                      </Table.Cell>
-                      
-                      <Table.Cell>
-                        <Text weight="medium">{form.submissions}</Text>
-                      </Table.Cell>
-                      
-                      <Table.Cell>
-                        <Flex align="center" gap="2">
-                          <ClockIcon />
-                          <Text>{form.versions}</Text>
-                        </Flex>
-                      </Table.Cell>
-                      
-                      <Table.Cell>
-                        <Text size="2">
-                          {new Date(form.lastModified).toLocaleDateString()}
-                        </Text>
-                      </Table.Cell>
-                      
-                      <Table.Cell>
-                        <Flex gap="2">
-                          <Button
-                            size="1"
-                            variant="ghost"
-                            onClick={() => selectForm(form)}
-                          >
-                            <Pencil1Icon /> Edit
-                          </Button>
-                          
-                          <Button
-                            size="1"
-                            variant="ghost"
-                            onClick={() => duplicateForm(form.id)}
-                          >
-                            <CopyIcon /> Duplicate
-                          </Button>
-                          
-                          {form.submissions === 0 && (
-                            <Button
-                              size="1"
-                              variant="ghost"
-                              color="red"
-                              onClick={() => {
-                                setSelectedForm(form);
-                                setShowDeleteDialog(true);
-                              }}
-                            >
-                              <TrashIcon />
-                            </Button>
-                          )}
-                        </Flex>
-                      </Table.Cell>
-                    </Table.Row>
-                  ))}
-                </Table.Body>
-              </Table.Root>
-            </Card>
-          </>
-        )}
+            <h4>Fields:</h4>
+            <ul>
+              {fields.map((f,i) => <li key={i}>{f.label} ({f.field_name}) - {f.field_type} {f.required ? '[Required]':''}</li>)}
+            </ul>
 
-        {/* Form Editing View */}
-        {activeTab === 'edit' && editingForm && (
-          <>
-            <Tabs.Root defaultValue="edit" className="editing-tabs">
-              <Tabs.List>
-                <Tabs.Trigger value="edit">
-                  <Pencil1Icon /> Edit Form
-                </Tabs.Trigger>
-                <Tabs.Trigger value="versions">
-                  <ClockIcon /> Version History
-                </Tabs.Trigger>
-                <Tabs.Trigger value="preview">
-                  <EyeOpenIcon /> Preview
-                </Tabs.Trigger>
-              </Tabs.List>
+            <h4>Projects:</h4>
+            <ul>
+              {projects.filter(p=>selectedProjects[p.project_name]).map(p => <li key={p.project_name}>{p.project_name}</li>)}
+            </ul>
 
-              {/* Edit Tab */}
-              <Tabs.Content value="edit">
-                <Card className="edit-form-card">
-                  <Flex direction="column" gap="4">
-                    <div className="form-header-section">
-                      <TextField.Root
-                        value={editingForm.title}
-                        onChange={(e) => setEditingForm({
-                          ...editingForm,
-                          title: e.target.value
-                        })}
-                        placeholder="Form Title"
-                        size="3"
-                      />
-                      
-                      <TextArea
-                        value={editingForm.description}
-                        onChange={(e) => setEditingForm({
-                          ...editingForm,
-                          description: e.target.value
-                        })}
-                        placeholder="Form Description"
-                        rows={2}
-                      />
-                      
-                      <Flex gap="4">
-                        <div className="form-field">
-                          <Text as="label" size="2" weight="medium">Category</Text>
-                          <Select.Root
-                            value={editingForm.category}
-                            onValueChange={(value) => setEditingForm({
-                              ...editingForm,
-                              category: value
-                            })}
-                          >
-                            <Select.Trigger />
-                            <Select.Content>
-                              <Select.Item value="Safety">Safety</Select.Item>
-                              <Select.Item value="Progress">Progress</Select.Item>
-                              <Select.Item value="Logistics">Logistics</Select.Item>
-                              <Select.Item value="Quality">Quality</Select.Item>
-                              <Select.Item value="Maintenance">Maintenance</Select.Item>
-                            </Select.Content>
-                          </Select.Root>
-                        </div>
-                        
-                        <div className="form-field">
-                          <Text as="label" size="2" weight="medium">Status</Text>
-                          <Select.Root
-                            value={editingForm.status}
-                            onValueChange={(value) => setEditingForm({
-                              ...editingForm,
-                              status: value
-                            })}
-                          >
-                            <Select.Trigger />
-                            <Select.Content>
-                              <Select.Item value="active">Active</Select.Item>
-                              <Select.Item value="draft">Draft</Select.Item>
-                              <Select.Item value="archived">Archived</Select.Item>
-                            </Select.Content>
-                          </Select.Root>
-                        </div>
-                      </Flex>
-                    </div>
-
-                    <Separator />
-
-                    {/* Questions Section */}
-                    <div className="questions-section">
-                      <Heading size="4">Questions</Heading>
-                      
-                      <div className="questions-list">
-                        {editingForm.questions.map((question) => (
-                          <Card key={question.id} className="question-card">
-                            <Flex direction="column" gap="3">
-                              <Flex justify="between" align="center">
-                                <Flex align="center" gap="2">
-                                  {getTypeBadge(question.type)}
-                                  {question.required && (
-                                    <Badge color="red" variant="soft">Required</Badge>
-                                  )}
-                                </Flex>
-                                
-                                <Button
-                                  size="1"
-                                  variant="ghost"
-                                  color="red"
-                                  onClick={() => removeQuestion(question.id)}
-                                >
-                                  <TrashIcon />
-                                </Button>
-                              </Flex>
-                              
-                              <TextField.Root
-                                value={question.text}
-                                onChange={(e) => updateQuestion(question.id, {
-                                  text: e.target.value
-                                })}
-                                placeholder="Question text"
-                              />
-                              
-                              <Flex gap="4">
-                                <div className="question-field">
-                                  <Text as="label" size="2">Type</Text>
-                                  <Select.Root
-                                    value={question.type}
-                                    onValueChange={(value) => updateQuestion(question.id, {
-                                      type: value
-                                    })}
-                                  >
-                                    <Select.Trigger size="1" />
-                                    <Select.Content>
-                                      <Select.Item value="text">Text</Select.Item>
-                                      <Select.Item value="paragraph">Paragraph</Select.Item>
-                                      <Select.Item value="multiple-choice">Multiple Choice</Select.Item>
-                                      <Select.Item value="checkbox">Checkbox</Select.Item>
-                                      <Select.Item value="date">Date</Select.Item>
-                                      <Select.Item value="number">Number</Select.Item>
-                                      <Select.Item value="rating">Rating</Select.Item>
-                                    </Select.Content>
-                                  </Select.Root>
-                                </div>
-                                
-                                <div className="question-field">
-                                  <Text as="label" size="2">Required</Text>
-                                  <Switch
-                                    checked={question.required}
-                                    onCheckedChange={(checked) => updateQuestion(question.id, {
-                                      required: checked
-                                    })}
-                                  />
-                                </div>
-                              </Flex>
-                            </Flex>
-                          </Card>
-                        ))}
-                      </div>
-
-                      {/* Add New Question */}
-                      <Card className="add-question-card">
-                        <Flex gap="3">
-                          <TextField.Root
-                            value={newQuestion}
-                            onChange={(e) => setNewQuestion(e.target.value)}
-                            placeholder="Enter new question text"
-                            style={{ flex: 1 }}
-                          />
-                          <Button onClick={addNewQuestion}>
-                            <PlusIcon /> Add Question
-                          </Button>
-                        </Flex>
-                      </Card>
-                    </div>
-
-                    <Separator />
-
-                    {/* Action Buttons */}
-                    <Flex justify="between" align="center">
-                      <Text size="2" color="gray">
-                        {editingForm.questions.length} questions • {editingForm.submissions} submissions
-                      </Text>
-                      
-                      <Flex gap="3">
-                        <Button
-                          variant="soft"
-                          onClick={() => setShowVersionDialog(true)}
-                        >
-                          <ClockIcon  /> Create New Version
-                        </Button>
-                        
-                        <Button onClick={saveFormEdits}>
-                          <CheckCircledIcon /> Save Changes
-                        </Button>
-                      </Flex>
-                    </Flex>
-                  </Flex>
-                </Card>
-              </Tabs.Content>
-
-              {/* Version History Tab */}
-              <Tabs.Content value="versions">
-                <Card className="versions-card">
-                  <Flex direction="column" gap="4">
-                    <Heading size="4">Version History</Heading>
-                    
-                    {versions[selectedForm.id] ? (
-                      <div className="versions-list">
-                        {versions[selectedForm.id].map((version) => (
-                          <Card key={version.id} className="version-card">
-                            <Flex direction="column" gap="2">
-                              <Flex justify="between" align="center">
-                                <Flex align="center" gap="2">
-                                  <Badge variant="soft">{version.version}</Badge>
-                                  <Text weight="medium">{version.note}</Text>
-                                </Flex>
-                                
-                                <Text size="2" color="gray">
-                                  {version.date}
-                                </Text>
-                              </Flex>
-                              
-                              <Text size="2" color="gray">
-                                Changes: {version.changes}
-                              </Text>
-                              
-                              <Flex justify="between" align="center">
-                                <Text size="2">
-                                  By {version.author}
-                                </Text>
-                                
-                                <Badge variant="soft">
-                                  {version.submissions} submissions
-                                </Badge>
-                              </Flex>
-                            </Flex>
-                          </Card>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="empty-versions">
-                        <ClockIcon size="24" />
-                        <Text color="gray">No version history available</Text>
-                      </div>
-                    )}
-                  </Flex>
-                </Card>
-              </Tabs.Content>
-
-              {/* Preview Tab */}
-              <Tabs.Content value="preview">
-                <Card className="preview-card">
-                  <Flex direction="column" gap="4">
-                    <Heading size="4">Form Preview</Heading>
-                    
-                    <div className="preview-content">
-                      <Heading size="5">{editingForm.title}</Heading>
-                      <Text color="gray">{editingForm.description}</Text>
-                      
-                      <div className="preview-questions">
-                        {editingForm.questions.map((question, index) => (
-                          <div key={question.id} className="preview-question">
-                            <Text weight="medium">
-                              {index + 1}. {question.text}
-                              {question.required && <Text color="red"> *</Text>}
-                            </Text>
-                            <Text size="2" color="gray" mt="1">
-                              Type: {question.type} • {question.required ? 'Required' : 'Optional'}
-                            </Text>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </Flex>
-                </Card>
-              </Tabs.Content>
-            </Tabs.Root>
-          </>
-        )}
-      </Container>
-
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog.Root open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialog.Content>
-          <AlertDialog.Title>Delete Form</AlertDialog.Title>
-          <AlertDialog.Description>
-            Are you sure you want to delete "{selectedForm?.title}"?
-            This action cannot be undone.
-          </AlertDialog.Description>
-          
-          <Flex gap="3" mt="4" justify="end">
-            <AlertDialog.Cancel>
-              <Button variant="soft">Cancel</Button>
-            </AlertDialog.Cancel>
-            <AlertDialog.Action>
-              <Button 
-                color="red"
-                onClick={() => deleteForm(selectedForm?.id)}
-              >
-                Delete Form
-              </Button>
-            </AlertDialog.Action>
-          </Flex>
-        </AlertDialog.Content>
-      </AlertDialog.Root>
-
-      {/* Create Version Dialog */}
-      <Dialog.Root open={showVersionDialog} onOpenChange={setShowVersionDialog}>
-        <Dialog.Content>
-          <Dialog.Title>Create New Version</Dialog.Title>
-          
-          <Dialog.Description>
-            <Flex direction="column" gap="4" mt="4">
-              <Text size="2" color="gray">
-                Creating version {selectedForm?.versions + 1}.0 of "{selectedForm?.title}"
-              </Text>
-              
-              <div>
-                <Text as="label" size="2" weight="medium">Version Note</Text>
-                <TextArea
-                  value={versionNote}
-                  onChange={(e) => setVersionNote(e.target.value)}
-                  placeholder="Describe what changed in this version..."
-                  rows={3}
-                  mt="2"
-                />
-              </div>
-              
-              {selectedForm?.submissions > 0 && (
-                <Card className="warning-card">
-                  <Flex gap="2">
-                    <ExclamationTriangleIcon color="amber" />
-                    <Text size="2" color="amber">
-                      This form has {selectedForm.submissions} existing submissions.
-                      Projects will need to submit the new version.
-                    </Text>
-                  </Flex>
-                </Card>
-              )}
-            </Flex>
-          </Dialog.Description>
-          
-          <Flex gap="3" mt="4" justify="end">
-            <Dialog.Close>
-              <Button variant="soft">Cancel</Button>
-            </Dialog.Close>
-            <Button onClick={createNewVersion}>
-              Create Version {selectedForm?.versions + 1}.0
-            </Button>
-          </Flex>
-        </Dialog.Content>
-      </Dialog.Root>
-
-      {/* Update Warning Dialog */}
-      <AlertDialog.Root open={showUpdateWarning} onOpenChange={setShowUpdateWarning}>
-        <AlertDialog.Content>
-          <AlertDialog.Title>Form Has Existing Submissions</AlertDialog.Title>
-          <AlertDialog.Description>
-            <Flex direction="column" gap="3">
-              <Text>
-                This form has {editingForm?.submissions} existing submissions.
-                Updating it will create a new version.
-              </Text>
-              
-              <Card className="warning-card">
-                <Flex gap="2">
-                  <ExclamationTriangleIcon color="amber" />
-                  <Text size="2">
-                    Projects with pending submissions will need to submit the updated version.
-                  </Text>
-                </Flex>
-              </Card>
-              
-              <Text weight="medium">
-                Do you want to send the updated form to all assigned projects?
-              </Text>
-            </Flex>
-          </AlertDialog.Description>
-          
-          <Flex gap="3" mt="4" justify="end">
-            <AlertDialog.Cancel>
-              <Button variant="soft">Save Only</Button>
-            </AlertDialog.Cancel>
-            <AlertDialog.Action>
-              <Button onClick={sendUpdatedForm}>
-                Save & Send to Projects
-              </Button>
-            </AlertDialog.Action>
-          </Flex>
-        </AlertDialog.Content>
-      </AlertDialog.Root>
-    </Navigation>
+            <button onClick={handleSubmit} style={{ marginRight:10 }}>Confirm & Update</button>
+            <button onClick={()=>setShowPreview(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

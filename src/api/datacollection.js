@@ -19,582 +19,394 @@ function mapFieldType(uiType) {
 
 // ==================== REPORTING FORM FUNCTIONS ====================
 
-// Create complete reporting form with fields and targets
-export async function createCompleteReportingForm(formData, fieldsData, projectsData) {
-  console.log("📌 [createCompleteReportingForm] Starting form creation...");
-  
-  try {
-    // Validation
-    if (!projectsData || projectsData.length === 0) {
-      throw new Error("No projects selected. At least one project is required.");
-    }
-    
-    // STEP 1: Create the main Reporting Form WITH targets (since it's mandatory)
-    console.log("📌 Step 1: Creating Reporting Form with targets...");
-    
-    // Prepare targets data with valid project references
-    const targetsData = projectsData.map((project, index) => {
-      // Ensure we have a valid project reference
-      if (!project.name) {
-        throw new Error(`Project at index ${index} has no name/ID`);
-      }
-      
-      return {
-        project: project.name, // This is the docname/ID - MANDATORY
-        project_name: project.project_name || project.project_code || project.name,
-        include: 1,
-        idx: index + 1
-      };
-    });
-    
-    const formPayload = {
-      form_title: formData.title,
-      description: formData.description || '',
-      reporting_period: formData.reportingPeriod,
-      year: parseInt(formData.year) || new Date().getFullYear(),
-      status: 'Draft', // Always start as Draft
-      target_projects: targetsData // MUST include since field is mandatory
-    };
-    
-    console.log("📌 Form payload:", JSON.stringify(formPayload, null, 2));
-    
-    const formRes = await fetch(`/api/resource/Reporting Form`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify(formPayload),
-    });
-    
-    const formResult = await formRes.json();
-    
-    if (!formRes.ok) {
-      console.error("Form creation failed:", formResult);
-      
-      // Try to parse server message
-      let errorMessage = formResult.message || "Failed to create form";
-      if (formResult._server_messages) {
-        try {
-          const messages = JSON.parse(formResult._server_messages);
-          if (messages.length > 0) {
-            const msg = JSON.parse(messages[0]);
-            errorMessage = msg.message || errorMessage;
-          }
-        } catch (e) {
-          // Ignore parsing error
-        }
-      }
-      
-      throw new Error(errorMessage);
-    }
-    
-    const formName = formResult.data.name;
-    console.log("✅ Step 1: Form created with name:", formName);
-    
-    // STEP 2: Add fields to the form
-    if (fieldsData && fieldsData.length > 0) {
-      console.log("📌 Step 2: Adding fields to form...");
-      
-      for (let i = 0; i < fieldsData.length; i++) {
-        const field = fieldsData[i];
-        
-        const fieldType = mapFieldType(field.type);
-        
-        let options = "";
-        if (field.options && Array.isArray(field.options) && field.options.length > 0) {
-          options = field.options.join("\n");
-        }
-        
-        const fieldPayload = {
-          label: field.label,
-          field_type: fieldType,
-          options: options,
-          required: field.required ? 1 : 0,
-          idx: i + 1,
-          parent: formName,
-          parentfield: "fields",
-          parenttype: "Reporting Form"
-        };
-        
-        console.log(`📌 Adding field ${i + 1}:`, fieldPayload);
-        
-        const fieldRes = await fetch(`/api/resource/Reporting Form Field`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(fieldPayload),
-        });
-        
-        if (!fieldRes.ok) {
-          const fieldResult = await fieldRes.json();
-          console.warn(`⚠️ Failed to add field ${i + 1}:`, fieldResult);
-        }
-      }
-      console.log("✅ Step 2: All fields added");
-    }
-    
-    // STEP 3: Update status if published
-    if (formData.status === 'Published') {
-      console.log("📌 Step 3: Publishing form...");
-      
-      const publishRes = await fetch(`/api/resource/Reporting Form/${formName}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ status: 'Published' }),
-      });
-      
-      if (!publishRes.ok) {
-        console.warn("⚠️ Failed to publish form, but form was created");
-      } else {
-        console.log("✅ Step 3: Form published");
-      }
-    }
-    
-    return {
-      success: true,
-      message: `Form "${formData.title}" created successfully!`,
-      data: {
-        formName,
-        fieldsCount: fieldsData?.length || 0,
-        projectsCount: projectsData?.length || 0
-      }
-    };
-    
-  } catch (error) {
-    console.error("❌ [createCompleteReportingForm] Error:", error);
-    throw error;
-  }
-}
 
-// Add this after createCompleteReportingForm function
-export async function publishForm(formName) {
-  console.log("📌 [publishForm] Publishing form:", formName);
-  
-  try {
-    const res = await fetch(`/api/resource/Reporting Form/${formName}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ status: 'Published' }),
-    });
-    
-    const data = await res.json();
-    
-    if (!res.ok) {
-      throw new Error(data.message || "Failed to publish form");
-    }
-    
-    console.log("✅ Form published successfully:", data.data);
-    return data.data;
-    
-  } catch (error) {
-    console.error("❌ [publishForm] Error:", error);
-    throw error;
-  }
-}
 
 // Get existing reporting forms
-export async function getReportingForms(status = null) {
-  console.log("📌 [getReportingForms] Fetching forms...");
-  
-  let url = `/api/resource/Reporting Form?fields=["name","form_title","description","status","reporting_period","year","creation","modified"]&limit_page_length=100`;
-  
-  if (status) {
-    url += `&filters=${encodeURIComponent(
-      JSON.stringify([["status", "=", status]])
-    )}`;
-  }
-  
+// api/datacollection.js
+
+// Fetch all Reporting Forms
+export async function getReportingForms() {
   try {
-    const res = await fetch(url, {
-      credentials: "include",
-    });
-    
-    const data = await res.json();
-    
-    if (!res.ok) {
-      throw new Error(data.message || "Failed to fetch reporting forms");
-    }
-    
-    const forms = data.data || [];
-    
-    // Get counts for each form
-    for (let form of forms) {
-      try {
-        const fieldsRes = await fetch(`/api/resource/Reporting Form Field?filters=[["parent","=","${form.name}"]]&limit_page_length=0`, {
-          credentials: "include",
-        });
-        const fieldsData = await fieldsRes.json();
-        form.fields_count = fieldsData.data?.length || 0;
-      } catch (e) {
-        form.fields_count = 0;
+    const response = await fetch(
+      `/api/resource/Reporting Form?fields=["name","form_title","reporting_period","year","status","creation","modified"]&limit_page_length=100`,
+      {
+        method: "GET",
+        credentials: "include", // important if using Frappe session auth
+        headers: {
+          "Content-Type": "application/json",
+        },
       }
-      
-      try {
-        const targetsRes = await fetch(`/api/resource/Reporting Form Target?filters=[["parent","=","${form.name}"]]&limit_page_length=0`, {
-          credentials: "include",
-        });
-        const targetsData = await targetsRes.json();
-        form.targets_count = targetsData.data?.length || 0;
-      } catch (e) {
-        form.targets_count = 0;
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    // console.log("📦 Reporting Forms API Response:", data);
+    // console.log("📊 Total Forms:", data.data?.length || 0);
+
+    return data.data; // return only the array of forms
+  } catch (error) {
+    // console.error("❌ Failed to fetch Reporting Forms:", error);
+    throw error;
+  }
+}
+
+export async function getReportingFormByName(name) {
+  try {
+    console.log(`📤 Fetching Reporting Form: ${name}`);
+    
+    const response = await fetch(
+      `/api/resource/Reporting Form/${name}`,
+      {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
       }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
     }
-    
-    return forms;
-    
+
+    const data = await response.json();
+    console.log("📦 Form details received:", data.data);
+    return data.data; // Returns the complete form with fields and target_projects
   } catch (error) {
-    console.error("❌ [getReportingForms] Error:", error);
+    console.error(`❌ Failed to fetch Reporting Form ${name}:`, error);
     throw error;
   }
 }
 
-// Get form details with child tables
-export async function getFormDetails(formName) {
+export async function getProjects() {
+  const response = await fetch(
+    `/api/resource/Project?fields=["*"]&limit_page_length=10`,
+    {
+      credentials: "include"
+    }
+  );
+
+  const data = await response.json();
+  console.log("📦 Projects:", data);
+  return data;
+}
+
+
+// Create a new Reporting Form
+// export async function createReportingForm(formData) {
+//   try {
+//     console.log('📤 Creating Reporting Form:', formData.form_title);
+    
+//     const response = await fetch('/api/resource/Reporting Form', {
+//       method: 'POST',
+//       credentials: 'include',
+//       headers: {
+//         'Content-Type': 'application/json',
+//         'Accept': 'application/json'
+//       },
+//       body: JSON.stringify(formData)
+//     });
+
+//     const result = await response.json();
+    
+//     if (!response.ok) {
+//       throw new Error(result.message || result.exception || `HTTP error ${response.status}`);
+//     }
+    
+//     console.log('✅ Form created successfully:', result.data?.name || result.name);
+//     return result;
+//   } catch (error) {
+//     console.error('❌ Failed to create Reporting Form:', error);
+//     throw error;
+//   }
+// }
+
+// Update an existing Reporting Form
+export async function updateReportingForm(name, formData) {
   try {
-    const res = await fetch(`/api/resource/Reporting Form/${formName}`, {
-      credentials: "include",
+    console.log('📤 Updating Reporting Form:', name);
+    
+    const response = await fetch(`/api/resource/Reporting Form/${name}`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(formData)
     });
+
+    const result = await response.json();
     
-    const data = await res.json();
-    
-    if (!res.ok) {
-      throw new Error(data.message || "Failed to fetch form details");
+    if (!response.ok) {
+      throw new Error(result.message || result.exception || `HTTP error ${response.status}`);
     }
     
-    return data.data;
-    
+    console.log('✅ Form updated successfully:', result.data?.name || result.name);
+    return result;
   } catch (error) {
-    console.error("❌ [getFormDetails] Error:", error);
+    console.error('❌ Failed to update Reporting Form:', error);
     throw error;
   }
 }
 
-// Get form fields
-export async function getFormFields(formName) {
+export async function deleteReportingForm(name) {
   try {
-    const res = await fetch(`/api/resource/Reporting Form Field?filters=[["parent","=","${formName}"]]&fields=["name","label","field_type","required","options","idx"]&order_by=idx`, {
-      credentials: "include",
-    });
+    console.log(`📤 Deleting Reporting Form: ${name}`);
     
-    const data = await res.json();
-    return data.data || [];
-    
-  } catch (error) {
-    console.error("❌ [getFormFields] Error:", error);
-    return [];
-  }
-}
-
-// Get form targets
-export async function getFormTargets(formName) {
-  try {
-    const res = await fetch(`/api/resource/Reporting Form Target?filters=[["parent","=","${formName}"]]&fields=["name","project","project_name","include","idx"]&order_by=idx`, {
-      credentials: "include",
-    });
-    
-    const data = await res.json();
-    return data.data || [];
-    
-  } catch (error) {
-    console.error("❌ [getFormTargets] Error:", error);
-    return [];
-  }
-}
-
-// Update form
-export async function updateForm(formName, formData) {
-  try {
-    const res = await fetch(`/api/resource/Reporting Form/${formName}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify(formData),
-    });
-    
-    const data = await res.json();
-    
-    if (!res.ok) {
-      throw new Error(data.message || "Failed to update form");
-    }
-    
-    return data.data;
-    
-  } catch (error) {
-    console.error("❌ [updateForm] Error:", error);
-    throw error;
-  }
-}
-
-// Delete form
-export async function deleteForm(formName) {
-  try {
-    const res = await fetch(`/api/resource/Reporting Form/${formName}`, {
+    const response = await fetch(`/api/resource/Reporting Form/${name}`, {
       method: "DELETE",
       credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
     });
-    
-    const data = await res.json();
-    
-    if (!res.ok) {
-      throw new Error(data.message || "Failed to delete form");
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || `HTTP error ${response.status}`);
     }
-    
-    return data;
-    
+
+    console.log(`✅ Form ${name} deleted successfully`);
+    return true;
   } catch (error) {
-    console.error("❌ [deleteForm] Error:", error);
+    console.error(`❌ Failed to delete Reporting Form ${name}:`, error);
     throw error;
   }
 }
 
-// ==================== PROJECT FUNCTIONS ====================
 
-// Get projects with error handling
-export async function getProjects() {
-  console.log("📌 [getProjects] Fetching projects...");
-  
+// Create Project API
+
+// createProject.js
+export async function createProject(projectData) {
   try {
-    const res = await fetch(`/api/resource/Project?fields=["name","project_name","project_code","status","region","district","project_manager","start_date","end_date","description"]&filters=[["status","=","Active"]]&limit=1000`, {
-      credentials: "include",
-    });
-    
-    const data = await res.json();
-    
-    if (!res.ok) {
-      throw new Error(data.message || "Failed to fetch projects");
-    }
-    
-    // Transform the data to ensure project_name exists
-    const projects = (data.data || []).map(project => ({
-      ...project,
-      project_name: project.project_name || project.project_code || project.name
-    }));
-    
-    console.log(`✅ Loaded ${projects.length} projects`);
-    return projects;
-    
-  } catch (error) {
-    console.error("❌ [getProjects] Error:", error);
-    return [];
-  }
-}
-
-// ==================== SUBMISSIONS FUNCTIONS ====================
-
-// Submit a report for a specific project and form
-export async function submitProjectReport(formName, projectName, formData, userId) {
-  console.log("📌 [submitProjectReport] Submitting report...");
-  
-  try {
-    const submissionPayload = {
-      reporting_form: formName,
-      project: projectName,
-      submitted_by: userId,
-      data: JSON.stringify(formData),
-      status: "Submitted"
-    };
-    
-    const res = await fetch(`/api/resource/Project Report Submission`, {
+    const response = await fetch("/api/resource/Project", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify(submissionPayload),
+      headers: {
+        "Content-Type": "application/json",
+        // If using API key/secret, uncomment below:
+        // "Authorization": "token YOUR_API_KEY:YOUR_API_SECRET"
+      },
+      body: JSON.stringify(projectData)
     });
-    
-    const data = await res.json();
-    
-    if (!res.ok) {
-      throw new Error(data.message || "Failed to submit report");
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.exception || "Failed to create project");
     }
-    
-    console.log("✅ Report submitted successfully:", data.data);
-    return data.data;
-    
+
+    const result = await response.json();
+    return result.data; // This is the created project
   } catch (error) {
-    console.error("❌ [submitProjectReport] Error:", error);
+    console.error("Error creating project:", error);
     throw error;
   }
 }
+// Get users with their Role
+export async function fetchUsersWithRoles(roleFilter = null) {
+  try {
+    console.log("Fetching users from API...");
 
-// Get all submissions
-export async function getSubmissions(filters = null) {
-  let url = `/api/resource/Project Report Submission?fields=["name","project","submitted_by","status","reporting_form","review_comment","creation","modified","data"]&order_by=creation desc&limit_page_length=100`;
-
-  if (filters) {
-    const filterArray = [];
-    
-    if (typeof filters === 'object' && !Array.isArray(filters)) {
-      for (const [key, value] of Object.entries(filters)) {
-        if (value !== null && value !== undefined && value !== '') {
-          filterArray.push([key, "=", value]);
-        }
+    const response = await fetch('/api/resource/User?fields=["name","full_name","email","roles.role"]', {
+      headers: {
+        "Content-Type": "application/json",
+        // "Authorization": "token YOUR_API_KEY:YOUR_API_SECRET" // if needed
       }
-    } else if (Array.isArray(filters) && filters.length > 0) {
-      filterArray.push(...filters);
-    }
-    
-    if (filterArray.length > 0) {
-      url += `&filters=${encodeURIComponent(JSON.stringify(filterArray))}`;
-    }
-  }
-
-  try {
-    const res = await fetch(url, {
-      credentials: "include",
     });
 
-    const data = await res.json();
+    console.log("Raw response status:", response.status);
 
-    if (!res.ok) {
-      throw new Error(data.message || "Failed to fetch submissions");
+    if (!response.ok) {
+      const error = await response.json();
+      console.error("Error response from API:", error);
+      throw new Error(error.exception || "Failed to fetch users");
     }
 
-    return data.data || [];
+    const rawUsers = await response.json();
+    console.log("Raw users data from API:", rawUsers.data);
+
+    const nestedUsers = Object.values(
+      rawUsers.data.reduce((acc, user, index) => {
+        if (!acc[user.email]) {
+          acc[user.email] = {
+            name: user.name,
+            full_name: user.full_name,
+            email: user.email,
+            roles: []
+          };
+        }
+        if (user.role) {
+          acc[user.email].roles.push(user.role);
+        }
+        console.log(`Processed row ${index}:`, user, "Current nested user:", acc[user.email]);
+        return acc;
+      }, {})
+    );
+
+    console.log("Nested users after processing:", nestedUsers);
+
+    // If a role filter is provided, only return users with that role
+    if (roleFilter) {
+      const filtered = nestedUsers.filter(u => u.roles.includes(roleFilter));
+      console.log(`Users filtered by role "${roleFilter}":`, filtered);
+      return filtered;
+    }
+
+    return nestedUsers;
 
   } catch (error) {
-    console.error("❌ [getSubmissions] Error:", error);
+    console.error("Error fetching users with roles:", error);
     return [];
   }
 }
 
-// Get submissions for a specific form
-export async function getFormSubmissions(formName) {
+// Update project by name
+export async function updateProject(projectName, projectData) {
   try {
-    const res = await fetch(`/api/resource/Project Report Submission?filters=[["reporting_form","=","${formName}"]]&fields=["name","project","submitted_by","status","creation","data","review_comment"]&order_by=creation desc`, {
-      credentials: "include",
-    });
-    
-    const data = await res.json();
-    return data.data || [];
-    
-  } catch (error) {
-    console.error("❌ [getFormSubmissions] Error:", error);
-    return [];
-  }
-}
+    console.log(`Updating project: ${projectName}`, projectData);
 
-// Update submission status
-export async function updateSubmissionStatus(submissionId, status, reviewComment = '') {
-  try {
-    const updateData = { status };
-    
-    if (reviewComment) {
-      updateData.review_comment = reviewComment;
-    }
-    
-    const res = await fetch(`/api/resource/Project Report Submission/${submissionId}`, {
+    const response = await fetch(`/api/resource/Project/${encodeURIComponent(projectName)}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify(updateData),
+      headers: {
+        "Content-Type": "application/json",
+        // "Authorization": "token YOUR_API_KEY:YOUR_API_SECRET" // optional
+      },
+      body: JSON.stringify(projectData)
     });
-    
-    const data = await res.json();
-    
-    if (!res.ok) {
-      throw new Error(data.message || "Failed to update submission");
+
+    const result = await response.json();
+    console.log("Update response:", result);
+
+    if (!response.ok) {
+      throw new Error(result.exception || "Failed to update project");
     }
-    
-    return data.data;
-    
+
+    return result.data;
   } catch (error) {
-    console.error("❌ [updateSubmissionStatus] Error:", error);
+    console.error("Error updating project:", error);
     throw error;
   }
 }
 
-// Parse submission data
-export function parseSubmissionData(submission) {
+
+// Delete a project by name
+export async function deleteProject(projectName) {
   try {
-    if (submission.data) {
-      return typeof submission.data === 'string' 
-        ? JSON.parse(submission.data) 
-        : submission.data;
+    console.log(`Deleting project: ${projectName}`);
+    const response = await fetch(`/api/resource/Project/${projectName}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        // "Authorization": "token YOUR_API_KEY:YOUR_API_SECRET" // optional
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Error deleting project:", errorData);
+      throw new Error(errorData.exception || "Failed to delete project");
     }
-    return {};
+
+    console.log(`Project ${projectName} deleted successfully.`);
+    return true;
   } catch (error) {
-    console.error("❌ [parseSubmissionData] Error:", error);
-    return {};
+    console.error("Error in deleteProject:", error);
+    throw error;
   }
 }
 
-// ==================== DASHBOARD STATS ====================
-
-export async function getDashboardStats() {
+// Get a single project by its name
+export async function getProject(projectName) {
   try {
-    const [projectsRes, formsRes, submissionsRes] = await Promise.all([
-      fetch(`/api/resource/Project?fields=["name"]&limit_page_length=0`, { credentials: "include" }),
-      fetch(`/api/resource/Reporting Form?fields=["name","status"]&limit_page_length=0`, { credentials: "include" }),
-      fetch(`/api/resource/Project Report Submission?fields=["name","status"]&limit_page_length=0`, { credentials: "include" })
-    ]);
+    console.log(`Fetching project: ${projectName}`);
+    const response = await fetch(`/api/resource/Project/${projectName}`, {
+      headers: {
+        "Content-Type": "application/json",
+      
+      },
+    });
 
-    const projectsData = await projectsRes.json();
-    const formsData = await formsRes.json();
-    const submissionsData = await submissionsRes.json();
-    
-    const totalProjects = projectsData.data?.length || 0;
-    const totalForms = formsData.data?.length || 0;
-    const publishedForms = formsData.data?.filter(f => f.status === 'Published')?.length || 0;
-    const totalSubmissions = submissionsData.data?.length || 0;
-    const pendingSubmissions = submissionsData.data?.filter(sub => sub.status === 'Submitted')?.length || 0;
-    const approvedSubmissions = submissionsData.data?.filter(sub => sub.status === 'Approved')?.length || 0;
-    
-    return {
-      totalProjects,
-      totalForms,
-      publishedForms,
-      totalSubmissions,
-      pendingSubmissions,
-      approvedSubmissions,
-      completedSubmissions: totalSubmissions - pendingSubmissions
-    };
-    
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Error fetching project:", errorData);
+      throw new Error(errorData.exception || `Failed to fetch project: ${projectName}`);
+    }
+
+    const result = await response.json();
+    console.log("Single project data:", result);
+    return result; // Return the project object directly
   } catch (error) {
-    console.error("❌ [getDashboardStats] Error:", error);
-    return {
-      totalProjects: 0,
-      totalForms: 0,
-      publishedForms: 0,
-      totalSubmissions: 0,
-      pendingSubmissions: 0,
-      approvedSubmissions: 0,
-      completedSubmissions: 0
-    };
+    console.error("Error in getProject:", error);
+    throw error;
   }
 }
 
-// ==================== UTILITY FUNCTIONS ====================
+// src/api/reportingFormApi.js
+export const createReportingForm = async (formData) => {
+  try {
+    const response = await fetch('/api/resource/Reporting Form', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData),
+    });
 
-export async function exportToCSV(data, filename = 'export.csv') {
-  if (!data || data.length === 0) {
-    console.warn("No data to export");
-    return;
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to create reporting form');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error creating reporting form:', error);
+    throw error;
   }
+};
+export async function getAllReportingForms() {
+  try {
+    console.log("Fetching all Reporting Forms...");
+    const response = await fetch('/api/resource/Reporting Form?fields=["*"]', {
+      headers: {
+        "Content-Type": "application/json",
+        // "Authorization": "token YOUR_API_KEY:YOUR_API_SECRET" // if needed
+      }
+    });
 
-  const headers = Object.keys(data[0]);
-  const csvContent = [
-    headers.join(','),
-    ...data.map(row => 
-      headers.map(header => {
-        const value = row[header] || '';
-        return typeof value === 'string' && value.includes(',') 
-          ? `"${value}"` 
-          : value;
-      }).join(',')
-    )
-  ].join('\n');
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Error fetching Reporting Forms:", errorData);
+      throw new Error(errorData.exception || "Failed to fetch Reporting Forms");
+    }
 
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
-  const url = URL.createObjectURL(blob);
-  
-  link.setAttribute('href', url);
-  link.setAttribute('download', filename);
-  link.style.visibility = 'hidden';
-  
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+    const data = await response.json();
+    console.log("Fetched Reporting Forms:", data.data);
+    return data.data; // array of forms
+  } catch (error) {
+    console.error("Error in getAllReportingForms:", error);
+    return [];
+  }
 }
+
+// src/api/datacollection.js
+export const getSingleReportingForm = async (formName) => {
+  try {
+    const response = await fetch(
+      `/api/resource/Reporting Form/${encodeURIComponent(formName)}?fields=["*"]`
+    );
+    if (!response.ok) {
+      throw new Error('Failed to fetch reporting form');
+    }
+    const data = await response.json();
+    return data.data; // The form data
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+};
