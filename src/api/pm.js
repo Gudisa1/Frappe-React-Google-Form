@@ -160,33 +160,68 @@ export const submitForm = async (payload) => {
   return await res.json();
 };
 // Fetch Project Report Submissions by project name dynamically
-export async function getProjectSubmissions(projectName) {
-  if (!projectName) {
-    throw new Error("Project name is required to fetch submissions.");
-  }
+// export async function getProjectSubmissions(projectName) {
+//   if (!projectName) {
+//     throw new Error("Project name is required to fetch submissions.");
+//   }
 
-  // Encode filters and fields as URL params
-  const filters = encodeURIComponent(
-    JSON.stringify([["project", "=", projectName]])
+//   // Encode filters and fields as URL params
+//   const filters = encodeURIComponent(
+//     JSON.stringify([["project", "=", projectName]])
+//   );
+//   const fields = encodeURIComponent(JSON.stringify(["*"]));
+
+//   const url = `/api/resource/Project Report Submission?filters=${filters}&fields=${fields}`;
+
+//   const response = await fetch(url, {
+//     method: "GET",
+//     headers: { "Content-Type": "application/json" },
+//     credentials: "include",
+//   });
+
+//   const responseData = await response.json();
+//   console.log("📩 Fetched submissions:", responseData);
+
+//   if (!response.ok) {
+//     throw new Error(
+//       responseData?.message || responseData?.exc || "Failed to fetch submissions"
+//     );
+//   }
+
+//   return responseData.data; // Typically Frappe returns {data: [...]}
+// }
+
+
+export const getProjectSubmissions = async (project) => {
+  const res = await fetch(
+    `/api/resource/Project Report Submission?filters=[["project","=","${project}"]]&fields=["name","reporting_form","project","submitted_by","owner","creation","modified","status"]`
   );
-  const fields = encodeURIComponent(JSON.stringify(["*"]));
 
-  const url = `/api/resource/Project Report Submission?filters=${filters}&fields=${fields}`;
+  const data = await res.json();
+  return data.data;
+};
 
-  const response = await fetch(url, {
-    method: "GET",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-  });
+export const getSubmissionDetail = async (submissionName) => {
+  const res = await fetch(
+    `/api/resource/Project Report Submission/${submissionName}`
+  );
 
-  const responseData = await response.json();
-  console.log("📩 Fetched submissions:", responseData);
+  const data = await res.json();
+  return data.data;
+};
 
-  if (!response.ok) {
-    throw new Error(
-      responseData?.message || responseData?.exc || "Failed to fetch submissions"
-    );
+export const deleteSubmission = async (submissionName) => {
+  const res = await fetch(
+    `/api/resource/Project Report Submission/${submissionName}`,
+    {
+      method: "DELETE",
+    }
+  );
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error?.message || "Failed to delete submission");
   }
 
-  return responseData.data; // Typically Frappe returns {data: [...]}
-}
+  return await res.json();
+};

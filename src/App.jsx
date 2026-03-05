@@ -40,6 +40,7 @@ import ProjectEdit from './pages/MRDashboard/ProjectEdit';
 import ProjectList from './pages/MRDashboard/ProjectList';
 import Form from './pages/MRDashboard/Form';
 import FormDetail from './pages/MRDashboard/FormDetail';
+import SubmissionDetail from './pages/PMDashboard/SubmissionDetail';
 function App() {
   const getSiteName = () => {
     if (window.frappe?.boot?.versions?.frappe === "14.0.0") {
@@ -70,7 +71,8 @@ function App() {
             {/* <Route path="/project-dashboard" element={<ProjectDashboard />} /> */}
           <Route path="/project-dashboard" element={<ProjectDashboard />} />
           <Route path="/submit" element={<Submit/>}/>
-          <Route path="/submissiontlist" element={<SubmissionList/>}/>
+          <Route path="/submission-list" element={<SubmissionList/>}/>
+          <Route path="/submission-detail" element={<SubmissionDetail/>} />
           <Route path="/director-dashboard" element={<DirectorDashboard />} />
           <Route path="/hr" element={<HRLayout />}>
 

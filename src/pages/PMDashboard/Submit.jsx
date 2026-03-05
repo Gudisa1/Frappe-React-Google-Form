@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation ,useNavigate} from "react-router-dom";
 import { getSingleReportingForm } from "../../api/datacollection";
 import { submitForm } from "../../api/pm";
 
 const Submit = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const formName = localStorage.getItem("selectedFormName");
 const formTitle = localStorage.getItem("selectedFormTitle");
 const project = localStorage.getItem("selectedProject");
@@ -66,6 +67,7 @@ const handleSubmit = async () => {
     await submitForm(payload);
 
     alert("Form submitted successfully");
+    navigate("/submission-list", { state: {projectName: project } });
   } catch (err) {
     console.error(err);
     alert("Submission failed");

@@ -1,68 +1,85 @@
 import React, { useEffect, useState } from "react";
-import { getProjectSubmissions } from "../../api/pm"; // import the fetch function
+import { useLocation ,useNavigate} from "react-router-dom";
+import { getProjectSubmissions,deleteSubmission  } from "../../api/pm";
 
 const SubmissionList = () => {
-  const [submissions, setSubmissions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const location = useLocation();
+  const projectName = location.state?.projectName;
+  const navigate = useNavigate();
 
-  // Get project name from localStorage
-  const projectName = JSON.parse(localStorage.getItem("projectName")) || "";
+  const [submissions, setSubmissions] = useState([]);
 
   useEffect(() => {
-    if (!projectName) {
-      setError("No project selected");
-      setLoading(false);
-      return;
-    }
-
-    const fetchSubmissions = async () => {
+    const loadSubmissions = async () => {
       try {
-        setLoading(true);
         const data = await getProjectSubmissions(projectName);
         setSubmissions(data);
-        console.log(data)
+        console.log("Fetched submissions:", data);
       } catch (err) {
-        console.error("Error fetching submissions:", err);
-        setError(err.message || "Failed to fetch submissions");
-      } finally {
-        setLoading(false);
+        console.error(err);
       }
     };
 
-    fetchSubmissions();
+    if (projectName) loadSubmissions();
   }, [projectName]);
+const handleDelete = async (submissionName) => {
+    if (!window.confirm("Are you sure you want to delete this submission?")) return;
 
-  if (loading) return <p>Loading submissions...</p>;
-  if (error) return <p style={{ color: "red" }}>{error}</p>;
-  if (!submissions.length) return <p>No submissions found for project "{projectName}"</p>;
-
+    try {
+      await deleteSubmission(submissionName);
+      // remove from local state so UI updates immediately
+      setSubmissions(submissions.filter((sub) => sub.name !== submissionName));
+      alert("Submission deleted successfully");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete submission");
+    }
+  };
   return (
     <div>
-      <h1>Submissions for Project: {projectName}</h1>
-      <table border="1" cellPadding="10" style={{ borderCollapse: "collapse", width: "100%" }}>
-        <thead>
-          <tr>
-            <th>Submitted By</th>
-            <th>Status</th>
-            <th>Data</th>
-            <th>Review Comment</th>
-          </tr>
-        </thead>
-        <tbody>
-          {submissions.map((sub) => (
-            <tr key={sub.name}>
-              <td>{sub.submitted_by}</td>
-              <td>{sub.status}</td>
-              <td>
-                <pre style={{ whiteSpace: "pre-wrap" }}>{JSON.stringify(sub.data, null, 2)}</pre>
-              </td>
-              <td>{sub.review_comment || "-"}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <h2>Submissions for {projectName}</h2>
+
+   {submissions.map((sub) => (
+  <div key={sub.name}
+
+    style={{
+      border: "1px solid gray",
+      padding: "10px",
+      marginBottom: "10px",
+      cursor: "default"
+    }}
+  >
+    <h4>{sub.reporting_form}</h4>
+    <p>Project: {sub.project}</p>
+    <p>Submitted By: {sub.submitted_by || sub.owner}</p>
+    <p>Status: {sub.status}</p>
+    <p>Submitted At: {sub.creation}</p>
+    
+         <div style={{ marginTop: "10px", display: "flex", gap: "10px" }}>
+      <button
+        onClick={() =>
+          navigate("/submission-detail", {
+            state: { submissionName: sub.name },
+          })
+        }
+      >
+        View Details
+      </button>
+
+      <button
+        onClick={(e) => {
+          e.stopPropagation(); // prevent navigating when deleting
+          handleDelete(sub.name);
+        }}
+      >
+        Delete
+      </button>
     </div>
+
+
+  </div>
+))}
+  </div>
   );
 };
 
