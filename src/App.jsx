@@ -41,6 +41,7 @@ import ProjectList from './pages/MRDashboard/ProjectList';
 import Form from './pages/MRDashboard/Form';
 import FormDetail from './pages/MRDashboard/FormDetail';
 import SubmissionDetail from './pages/PMDashboard/SubmissionDetail';
+import ProjectLayout from './pages/PMDashboard/ProjectLayout';
 function App() {
   const getSiteName = () => {
     if (window.frappe?.boot?.versions?.frappe === "14.0.0") {
@@ -69,10 +70,12 @@ function App() {
             <Route path="/mr-dashboard/notifications" element={<Notifications />} />
             <Route path="/mr-dashboard/analytics" element={<Analytics />} />
             {/* <Route path="/project-dashboard" element={<ProjectDashboard />} /> */}
-          <Route path="/project-dashboard" element={<ProjectDashboard />} />
-          <Route path="/submit" element={<Submit/>}/>
-          <Route path="/submission-list" element={<SubmissionList/>}/>
-          <Route path="/submission-detail" element={<SubmissionDetail/>} />
+          <Route path="/" element={<ProjectLayout />}>
+              <Route path="project-dashboard" element={<ProjectDashboard />} />
+              <Route path="submit" element={<Submit />} />
+              <Route path="submission-list" element={<SubmissionList />} />
+              <Route path="submission-detail" element={<SubmissionDetail />} />
+            </Route>
           <Route path="/director-dashboard" element={<DirectorDashboard />} />
           <Route path="/hr" element={<HRLayout />}>
 

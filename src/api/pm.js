@@ -146,19 +146,52 @@ export async function fetchFormsByProject(projectName) {
 
 //   return responseData;
 // }
-export const submitForm = async (payload) => {
-  const res = await fetch("/api/resource/Project Report Submission", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      data: payload
-    }),
-  });
+// export const submitForm = async (payload) => {
+//   const res = await fetch("/api/resource/Project Report Submission", {
+//     method: "POST",
+//     headers: {
+//       "Content-Type": "application/json",
+//     },
+//     body: JSON.stringify({
+//       data: payload
+//     }),
+//   });
 
-  return await res.json();
+//    // Check if HTTP status indicates error
+ 
+
+//   return await res.json();
+// };
+
+export const submitForm = async (payload) => {
+  try {
+    const res = await fetch("/api/resource/Project Report Submission", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ data: payload }),
+    });
+
+    // Check if HTTP status indicates error
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      // Combine status and backend message if available
+      const errorMessage =
+        errorData.message || errorData.error || `HTTP ${res.status} ${res.statusText}`;
+      throw new Error(errorMessage);
+    }
+
+    // parse the JSON on success
+    const data = await res.json();
+    return data;
+  } catch (err) {
+    console.error("Submit Form Error:", err);
+    // re-throw so frontend can handle
+    throw err;
+  }
 };
+
 // Fetch Project Report Submissions by project name dynamically
 // export async function getProjectSubmissions(projectName) {
 //   if (!projectName) {
