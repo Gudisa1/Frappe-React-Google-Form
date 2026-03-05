@@ -112,38 +112,53 @@ export async function fetchFormsByProject(projectName) {
 // }
 
 
-export async function submitForm(reportingFormName, projectName, submittedBy, data) {
-  if (!projectName || !reportingFormName || !submittedBy) {
-    throw new Error("Project, reporting form, and submittedBy are required.");
-  }
+// In your api/pm.js file
+// export async function submitForm(reportingFormName, projectName, submittedBy, data) {
+//   if (!projectName || !reportingFormName || !submittedBy) {
+//     throw new Error("Project, reporting form, and submittedBy are required.");
+//   }
 
-    const payload = {
-    doctype: "Project Report Submission",
-    reporting_form: reportingFormName,
-    project: projectName,
-    submitted_by: submittedBy,
-    status: "Submitted",
-    data: JSON.stringify(data)   // ✅ FIX
-    };
+//   // ✅ FIX: Don't stringify the data - let Frappe handle JSON serialization
+//   const payload = {
+//     doctype: "Project Report Submission",
+//     reporting_form: reportingFormName,
+//     project: projectName,
+//     submitted_by: submittedBy,
+//     status: "Submitted",
+//     data: data  // Send as object, NOT stringified
+//   };
 
-  const response = await fetch("/api/resource/Project Report Submission", {
+//   console.log("📦 Submitting payload:", payload);
+
+//   const response = await fetch("/api/resource/Project Report Submission", {
+//     method: "POST",
+//     headers: { "Content-Type": "application/json" },
+//     credentials: "include",
+//     body: JSON.stringify(payload) // Stringify the ENTIRE payload, not just data
+//   });
+
+//   const responseData = await response.json();
+//   console.log("📩 Server response:", responseData);
+
+//   if (!response.ok) {
+//     throw new Error(responseData?.message || responseData?.exc || "Form submission failed");
+//   }
+
+//   return responseData;
+// }
+export const submitForm = async (payload) => {
+  const res = await fetch("/api/resource/Project Report Submission", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify(payload)
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      data: payload
+    }),
   });
 
-  const responseData = await response.json();
-  console.log("📩 Server response:", responseData);
-
-  if (!response.ok) {
-    throw new Error(responseData?.message || responseData?.exc || "Form submission failed");
-  }
-
-  return responseData;
-}
-
-
+  return await res.json();
+};
 // Fetch Project Report Submissions by project name dynamically
 export async function getProjectSubmissions(projectName) {
   if (!projectName) {

@@ -80,6 +80,9 @@ const ProjectDashboard = () => {
                    <button
         onClick={() => {
           // Navigate to Submit page with state
+            localStorage.setItem("selectedFormName", f.name);
+            localStorage.setItem("selectedFormTitle", f.form_title);
+            localStorage.setItem("selectedProject", projects[0]?.project_name);
           navigate("/submit", {
             state: {
               formName: f.name,

@@ -5,183 +5,110 @@ import { submitForm } from "../../api/pm";
 
 const Submit = () => {
   const location = useLocation();
-  const { formName, formTitle, project, currentUser } = location.state || {};
+  const formName = localStorage.getItem("selectedFormName");
+const formTitle = localStorage.getItem("selectedFormTitle");
+const project = localStorage.getItem("selectedProject");
+const pm = JSON.parse(localStorage.getItem("projectManager"));
+const email = pm?.email;
+
+  // const { formName, formTitle, project } = location.state || {};
+  console.log(formName,formTitle,project)
+
   const [form, setForm] = useState(null);
   const [formData, setFormData] = useState({});
-
-  // Fallback: get PM from localStorage if not passed via state
-  const pmFromStorage = JSON.parse(localStorage.getItem("projectManager"));
-  const submittingUser = currentUser?.email || pmFromStorage?.email;
-
-  console.log("Location state:", location.state);
-  console.log("Project Manager from localStorage:", pmFromStorage);
-  console.log("Submitting user email:", submittingUser);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (formName) {
-      console.log("Fetching form for:", formName);
-      getSingleReportingForm(formName)
-        .then((data) => {
-          console.log("Fetched form data:", data);
-          setForm(data);
+    const loadForm = async () => {
+      try {
+        const data = await getSingleReportingForm(formName);
+        setForm(data);
 
-          // Initialize formData with empty values using a unique key for each field
-          const initialData = {};
-          data.fields.forEach((field, index) => {
-            // Create a unique key for each field (combine field_name with index or use field.id if available)
-            const uniqueKey = field.id || `${field.field_name}_${index}`;
-            console.log("Initializing field:", field.field_name, "with unique key:", uniqueKey);
-            initialData[uniqueKey] = {
-              field_name: field.field_name,
-              value: field.field_type === "Check" ? false : ""
-            };
-          });
-          console.log("Initial formData state:", initialData);
-          setFormData(initialData);
-        })
-        .catch((err) => console.error("Error fetching form:", err));
-    }
+        // initialize form data
+        const initialData = {};
+        data.fields.forEach((f) => {
+          initialData[f.field_name] = "";
+        });
+
+        setFormData(initialData);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (formName) loadForm();
+      console.log(formName,project)
+
   }, [formName]);
 
-  const handleChange = (field, value, uniqueKey) => {
-    setFormData((prev) => ({
-      ...prev,
-      [uniqueKey]: {
-        ...prev[uniqueKey],
-        value: value
-      }
-    }));
+  const handleChange = (field, value) => {
+    setFormData({
+      ...formData,
+      [field]: value,
+    });
   };
 
-  const renderField = (field, uniqueKey) => {
-    const fieldValue = formData[uniqueKey]?.value;
+const handleSubmit = async () => {
+  try {
+    const payload = {
+      doctype: "Project Report Submission",
+      reporting_form: formName,
+      project: project,
+      submitted_by: email,
+      status: "Submitted",
+      data: JSON.stringify(formData),
+    };
 
-    switch (field.field_type) {
-      case "Data":
-      case "Small Text":
-      case "Text":
-        return (
-          <input
-            type="text"
-            value={fieldValue || ""}
-            onChange={(e) => handleChange(field, e.target.value, uniqueKey)}
-          />
-        );
-      case "Int":
-      case "Float":
-      case "Currency":
-        return (
-          <input
-            type="number"
-            value={fieldValue || ""}
-            onChange={(e) => handleChange(field, e.target.value, uniqueKey)}
-          />
-        );
-      case "Date":
-        return (
-          <input
-            type="date"
-            value={fieldValue || ""}
-            onChange={(e) => handleChange(field, e.target.value, uniqueKey)}
-          />
-        );
-      case "Select":
-        return (
-          <select
-            value={fieldValue || ""}
-            onChange={(e) => handleChange(field, e.target.value, uniqueKey)}
-          >
-            <option value="">Select...</option>
-            {field.options?.split("\n").map((opt) => (
-              <option key={opt} value={opt}>
-                {opt}
-              </option>
-            ))}
-          </select>
-        );
-      case "Check":
-        return (
-          <input
-            type="checkbox"
-            checked={fieldValue || false}
-            onChange={(e) => handleChange(field, e.target.checked, uniqueKey)}
-          />
-        );
-      default:
-        return <input type="text" value={fieldValue || ""} readOnly />;
-    }
-  };
+    console.log("Submitting:", payload);
 
-  const handleSubmit = async () => {
-    console.log("Submitting form with data:", formData);
-    console.log("Form name:", form?.name, "Project:", project, "Submitted by:", submittingUser);
+    await submitForm(payload);
 
-    if (!submittingUser) {
-      alert("Cannot determine who is submitting the form.");
-      return;
-    }
-    if (!project) {
-      alert("Project is required before submission.");
-      return;
-    }
-    if (!form?.name) {
-      alert("Form is not loaded properly.");
-      return;
-    }
+    alert("Form submitted successfully");
+  } catch (err) {
+    console.error(err);
+    alert("Submission failed");
+  }
+};
 
-    try {
-      // Check for duplicate submission client-side
-      const existingKey = `submitted_${form.name}_${project}`;
-      if (localStorage.getItem(existingKey)) {
-        alert("You have already submitted this form for this project.");
-        return;
-      }
-
-      // Transform formData back to the format expected by the backend
-      const submissionData = {};
-      Object.values(formData).forEach(item => {
-        submissionData[item.field_name] = item.value;
-      });
-
-      console.log("Transformed submission data:", submissionData);
-
-      const response = await submitForm(form.name, project, submittingUser, submissionData);
-      console.log("Form submission response:", response);
-
-      // Save locally to prevent accidental double-submit
-      localStorage.setItem(existingKey, "true");
-
-      alert("Form submitted successfully!");
-    } catch (err) {
-      console.error("Form submission error:", err);
-      alert("Failed to submit form: " + (err.message || "Unknown error"));
-    }
-  };
-
-  if (!form) return <p>Loading form...</p>;
+  if (loading) return <p>Loading form...</p>;
+  if (!form) return <p>No form found</p>;
 
   return (
     <div>
-      <h1>Submit Form</h1>
-      <p>Form Title: {formTitle}</p>
-      <p>Project: {project}</p>
-      <p>Submitting as: {submittingUser}</p>
+      <h1>{formTitle}</h1>
 
-      {form.fields.map((field, index) => {
-        // Create a unique key for each field
-        const uniqueKey = field.id || `${field.field_name}_${index}`;
-        
-        return (
-          <div key={uniqueKey} style={{ marginBottom: 15 }}>
-            <label>
-              {field.label} {field.required ? "*" : ""}
-            </label>
-            {renderField(field, uniqueKey)}
-          </div>
-        );
-      })}
+      {form.fields.map((field) => (
+        <div key={field.field_name} style={{ marginBottom: "15px" }}>
+          <label>
+            {field.label} {field.required ? "*" : ""}
+          </label>
 
-      <button onClick={handleSubmit}>Submit Form</button>
+          {field.field_type === "Small Text" ? (
+            <textarea
+              value={formData[field.field_name]}
+              onChange={(e) =>
+                handleChange(field.field_name, e.target.value)
+              }
+            />
+          ) : (
+            <input
+              type={
+                field.field_type === "Float" || field.field_type === "Int"
+                  ? "number"
+                  : "text"
+              }
+              value={formData[field.field_name]}
+              onChange={(e) =>
+                handleChange(field.field_name, e.target.value)
+              }
+            />
+          )}
+        </div>
+      ))}
+
+      <button onClick={handleSubmit}>Submit Report</button>
     </div>
   );
 };
