@@ -57,7 +57,7 @@ function App() {
         <Routes>
           <Route path="/" element={<LoginPage />} />
           <Route path="/mr-dashboard" element={<MRDashboard />} />
-          <Route path="/mr-dashboard/forms" element={<FormBuilder />} />
+          {/* <Route path="/mr-dashboard/forms" element={<FormBuilder />} /> */}
           <Route path="/mr-dashboard/form" element={<Form/>} />
             <Route path="/mr-dashboard/formlist" element={<FormList />} />
             <Route path="/mr-dashboard/forms/:formName" element={<FormDetail />} />
@@ -67,8 +67,7 @@ function App() {
             <Route path="/mr-dashboard/projects" element={<Project />} />
             <Route path="/mr-dashboard/projectslist" element={<ProjectList/>} />
             <Route path="/mr-dashboard/projects/:projectName/edit" element={<ProjectEdit />} />
-            <Route path="/mr-dashboard/notifications" element={<Notifications />} />
-            <Route path="/mr-dashboard/analytics" element={<Analytics />} />
+           
             {/* <Route path="/project-dashboard" element={<ProjectDashboard />} /> */}
           <Route path="/" element={<ProjectLayout />}>
               <Route path="project-dashboard" element={<ProjectDashboard />} />
