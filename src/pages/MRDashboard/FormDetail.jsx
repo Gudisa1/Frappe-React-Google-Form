@@ -90,8 +90,9 @@
 // FormDetail.jsx - Elegant Dark Theme
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getSingleReportingForm, deleteReportingForm } from '../../api/datacollection';
+import { getSingleReportingForm, deleteReportingForm,fetchSubmissionsByForm  } from '../../api/datacollection';
 import './FormDetail.css';
+import * as XLSX from "xlsx";
 
 const FormDetail = () => {
   const { formName } = useParams();
@@ -139,6 +140,36 @@ const FormDetail = () => {
       alert('Failed to delete form: ' + err.message);
     }
   };
+const handleExportExcel = async () => {
+  console.log("Export button clicked"); // DEBUG
+  try {
+    const submissions = await fetchSubmissionsByForm(formName);
+    console.log("Fetched submissions:", submissions);
+    if (!submissions.length) {
+      alert("No submissions found for this form.");
+      return;
+    }
+
+    const rows = submissions.map(sub => ({
+      Submission_ID: sub.name,
+      Project: sub.project,
+      Submitted_By: sub.submitted_by,
+      Status: sub.status,
+      ...sub.parsedData
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Submissions");
+    XLSX.writeFile(workbook, `${formName}_submissions.xlsx`);
+  } catch (error) {
+    console.error("Excel export failed:", error);
+    alert("Failed to export Excel.");
+  }
+};
+const handleViewSubmissions = () => {
+  navigate(`/mr-dashboard/forms/${encodeURIComponent(formName)}/submissions`);
+};
 
   if (loading) {
     return (
@@ -183,6 +214,22 @@ const FormDetail = () => {
           </button>
           
           <div className="nav-actions">
+            <button onClick={handleViewSubmissions} className="nav-button">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    <span>Submissions</span>
+                  </button>
+
+                  <button onClick={handleExportExcel} className="nav-button">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M12 3v12"/>
+                      <path d="M7 10l5 5 5-5"/>
+                      <path d="M5 21h14"/>
+                    </svg>
+                    <span>Export Excel</span>
+          </button>
             <button onClick={handleEdit} className="nav-button">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"/>

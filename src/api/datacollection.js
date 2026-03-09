@@ -410,3 +410,127 @@ export const getSingleReportingForm = async (formName) => {
     throw err;
   }
 };
+
+// api.js
+export const fetchSubmissions = async () => {
+  try {
+    const response = await fetch(
+      `/api/resource/Project Report Submission?fields=%5B%22name%22%2C%22owner%22%2C%22reporting_form%22%2C%22project%22%2C%22submitted_by%22%2C%22status%22%5D`
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    // Usually the data is under data.data in ERPNext/Frappe
+    return data.data || [];
+  } catch (error) {
+    console.error("Error fetching submissions:", error);
+    return [];
+  }
+};
+
+
+
+export const fetchSubmissionDetail = async (name) => {
+  try {
+    const response = await fetch(
+      `/api/resource/Project Report Submission/${name}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // important if using frappe session auth
+      }
+    );
+
+    const result = await response.json();
+
+    const submission = result.data;
+
+    // parse the JSON stored in "data"
+    const parsedData = JSON.parse(submission.data);
+
+    return {
+      ...submission,
+      parsedData,
+    };
+
+  } catch (error) {
+    console.error("Error fetching submission:", error);
+    return null;
+  }
+};
+
+// In your api/datacollection.js file
+
+/**
+ * Fetch submissions by reporting form
+ * @param {string} reportingForm - The name of the reporting form
+ * @returns {Promise<Array>} - Array of submissions with parsed data
+ */
+export const fetchSubmissionsByForm = async (reportingForm) => {
+  try {
+    // Validate input
+    if (!reportingForm) {
+      throw new Error('Reporting form name is required');
+    }
+
+    // Build the URL with filters and fields=["*"]
+    const url = `/api/resource/Project Report Submission?filters=${JSON.stringify([["reporting_form", "=", reportingForm]])}&fields=["*"]`;
+
+    console.log('Fetching from URL:', url); // For debugging
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include", // Important for Frappe session auth
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    const submissions = result.data || [];
+
+    // Parse the data field for each submission
+    const parsedSubmissions = submissions.map(sub => {
+      try {
+        // Parse the JSON string in the data field
+        const parsedData = sub.data ? JSON.parse(sub.data) : {};
+        
+        // Convert string values to numbers where appropriate
+        const numericData = {};
+        Object.entries(parsedData).forEach(([key, value]) => {
+          // Try to convert to number if it's a string containing a number
+          if (typeof value === 'string' && value.trim() !== '' && !isNaN(value)) {
+            numericData[key] = parseFloat(value);
+          } else {
+            numericData[key] = value;
+          }
+        });
+        
+        return {
+          ...sub,
+          parsedData: numericData
+        };
+      } catch (e) {
+        console.error(`Error parsing data for submission ${sub.name}:`, e);
+        return {
+          ...sub,
+          parsedData: {}
+        };
+      }
+    });
+
+    return parsedSubmissions;
+  } catch (error) {
+    console.error(`Error fetching submissions for form "${reportingForm}":`, error);
+    return [];
+  }
+};

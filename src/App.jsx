@@ -16,8 +16,7 @@ import FormBuilder from './pages/MRDashboard/FormBuilder';
 import FormList from './pages/MRDashboard/FormList';
 import SubmissionReview from './pages/MRDashboard/SubmissionReview';
 import FormEditing from './pages/MRDashboard/FormEditing';
-import Notifications from './pages/MRDashboard/Notifications';
-import Analytics from './pages/MRDashboard/Analytics';
+
 import ProjectDashboard from './pages/PMDashboard/ProjectDashboard';
 import Submit from './pages/PMDashboard/Submit'
 import SubmissionList from './pages/PMDashboard/SubmissionList'
@@ -42,6 +41,8 @@ import Form from './pages/MRDashboard/Form';
 import FormDetail from './pages/MRDashboard/FormDetail';
 import SubmissionDetail from './pages/PMDashboard/SubmissionDetail';
 import ProjectLayout from './pages/PMDashboard/ProjectLayout';
+import Submissions from './pages/MRDashboard/Submissions';
+import MRSubmissionDetail from './pages/MRDashboard/MRSubmissionDetails';
 function App() {
   const getSiteName = () => {
     if (window.frappe?.boot?.versions?.frappe === "14.0.0") {
@@ -62,12 +63,14 @@ function App() {
             <Route path="/mr-dashboard/formlist" element={<FormList />} />
             <Route path="/mr-dashboard/forms/:formName" element={<FormDetail />} />
               <Route path="/mr-dashboard/forms/:formName/edit" element={<FormEditing />} />
+               <Route path="/mr-dashboard/submissions" element={<Submissions/>} />
+               <Route path="/mr-dashboard/submissions/:name" element={<MRSubmissionDetail/>} />
+
 
             <Route path="/mr-dashboard/submissions" element={<SubmissionReview />} />
             <Route path="/mr-dashboard/projects" element={<Project />} />
             <Route path="/mr-dashboard/projectslist" element={<ProjectList/>} />
             <Route path="/mr-dashboard/projects/:projectName/edit" element={<ProjectEdit />} />
-           
             {/* <Route path="/project-dashboard" element={<ProjectDashboard />} /> */}
           <Route path="/" element={<ProjectLayout />}>
               <Route path="project-dashboard" element={<ProjectDashboard />} />
