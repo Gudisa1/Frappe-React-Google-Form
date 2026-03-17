@@ -97,6 +97,8 @@ import React, { useEffect, useState } from "react";
 import { getProjects, deleteProject } from "../../api/datacollection";
 import { useNavigate } from "react-router-dom";
 import "./ProjectList.css";
+import GoToDashboardButton  from '../../components/GoToDashboardButton';
+
 
 const ProjectList = () => {
   const [projects, setProjects] = useState([]);
@@ -425,6 +427,8 @@ const ProjectList = () => {
 
   return (
     <div className="project-list-container">
+            <GoToDashboardButton />
+
       <div className="projects-card">
         <div className="projects-header">
           <div className="header-content">

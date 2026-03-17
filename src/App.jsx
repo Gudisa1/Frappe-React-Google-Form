@@ -58,7 +58,6 @@ function App() {
         <Routes>
           <Route path="/" element={<LoginPage />} />
           <Route path="/mr-dashboard" element={<MRDashboard />} />
-          {/* <Route path="/mr-dashboard/forms" element={<FormBuilder />} /> */}
           <Route path="/mr-dashboard/form" element={<Form/>} />
             <Route path="/mr-dashboard/formlist" element={<FormList />} />
             <Route path="/mr-dashboard/forms/:formName" element={<FormDetail />} />

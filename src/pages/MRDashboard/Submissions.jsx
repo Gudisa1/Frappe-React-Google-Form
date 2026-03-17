@@ -50,6 +50,8 @@ import { fetchSubmissions } from '../../api/datacollection';
 import { useNavigate } from 'react-router-dom';
 import SubmissionAnalytics from './SubmissionAnalytics';
 import "./Submissions.css";
+import GoToDashboardButton  from '../../components/GoToDashboardButton';
+
 
 const Submissions = () => {
   const [submissions, setSubmissions] = useState([]);
@@ -161,6 +163,8 @@ const Submissions = () => {
   return (
     <div className="submissions-container">
       {/* Header Section with View Toggle */}
+            <GoToDashboardButton />
+
       <div className="submissions-header">
         <div className="header-content">
           <h1 className="header-title">Submissions</h1>

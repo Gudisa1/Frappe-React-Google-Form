@@ -250,6 +250,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getProjects, createReportingForm } from '../../api/datacollection';
 import './Form.css'; // We'll create this CSS file
+import GoToDashboardButton  from '../../components/GoToDashboardButton';
+
 
 export const ALLOWED_FIELD_TYPES = [
   'Data',
@@ -383,6 +385,9 @@ const Form = () => {
 
   return (
     <div className="form-container">
+       <div className="p-4">
+      <GoToDashboardButton />
+    </div>
       <div className="form-card">
         <div className="form-header">
           <h2 className="form-title">Create Reporting Form</h2>

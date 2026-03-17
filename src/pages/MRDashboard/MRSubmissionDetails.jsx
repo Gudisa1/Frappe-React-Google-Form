@@ -69,9 +69,9 @@ import { useParams } from "react-router-dom";
 import { fetchSubmissionDetail } from "../../api/datacollection";
 import { 
   exportSubmissionToExcel, 
-  exportSubmissionWithCategorization 
 } from "../../hooks/xl";
 import "./MRSubmissionDetail.css";
+import Navigation from '../../components/Navigation';
 
 const MRSubmissionDetail = () => {
   const { name } = useParams();
@@ -120,6 +120,7 @@ const MRSubmissionDetail = () => {
   }
 
   return (
+    <Navigation>
     <div className="detail-container">
       {/* Header Section */}
       <div className="detail-header">
@@ -135,15 +136,7 @@ const MRSubmissionDetail = () => {
               </svg>
               Export to Excel
             </button>
-            <button 
-              className="export-btn categorized"
-              onClick={() => exportSubmissionWithCategorization(submission)}
-            >
-              <svg className="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              Export Categorized
-            </button>
+          
           </div>
         </div>
 
@@ -200,6 +193,7 @@ const MRSubmissionDetail = () => {
         </div>
       </div>
     </div>
+    </Navigation>
   );
 };
 

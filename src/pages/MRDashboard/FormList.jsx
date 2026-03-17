@@ -160,6 +160,8 @@ import React, { useEffect, useState } from "react";
 import { getAllReportingForms, deleteReportingForm } from "../../api/datacollection";
 import { useNavigate } from "react-router-dom";
 import './FormList.css';
+import GoToDashboardButton  from '../../components/GoToDashboardButton';
+
 
 const FormList = () => {
   const [forms, setForms] = useState([]);
@@ -303,6 +305,8 @@ const FormList = () => {
 
   return (
     <div className="formlist-container">
+            <GoToDashboardButton />
+
       <div className="formlist-card">
         <div className="formlist-header">
           <div className="header-left">

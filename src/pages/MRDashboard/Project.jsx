@@ -164,6 +164,7 @@ import React, { useState, useEffect } from "react";
 import { createProject, fetchUsersWithRoles } from "../../api/datacollection";
 import "./Project.css"; // Import the independent stylesheet
 import { useNavigate } from "react-router-dom";
+import GoToDashboardButton  from '../../components/GoToDashboardButton';
 
 const Project = () => {
   // Form state (unchanged)
@@ -309,7 +310,10 @@ const Project = () => {
   };
 
   return (
+    
     <div className="project-container">
+            <GoToDashboardButton />
+
       <div className="project-card">
         <div className="project-header">
           <h1 className="project-title">Create New Project</h1>

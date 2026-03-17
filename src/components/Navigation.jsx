@@ -18,14 +18,14 @@ const Navigation = ({ children }) => {
   
   const navItems = [
     { path: '/mr-dashboard', icon: <DashboardIcon />, label: 'Dashboard', key: 'dashboard' },
-    { path: '/mr-dashboard/forms', icon: <FileTextIcon />, label: 'Form Builder', key: 'forms' },
-    { path: '/mr-dashboard/assign', icon: <PaperPlaneIcon />, label: 'Assign Forms', key: 'assign' },
+    // { path: '/mr-dashboard/forms', icon: <FileTextIcon />, label: 'Form Builder', key: 'forms' },
+    // { path: '/mr-dashboard/assign', icon: <PaperPlaneIcon />, label: 'Assign Forms', key: 'assign' },
     { path: '/mr-dashboard/submissions', icon: <CheckCircledIcon />, label: 'Submissions', key: 'submissions' },
-    { path: '/mr-dashboard/edit-forms', icon: <Pencil2Icon />, label: 'Edit Forms', key: 'edit-forms' },
+    // { path: '/mr-dashboard/edit-forms', icon: <Pencil2Icon />, label: 'Edit Forms', key: 'edit-forms' },
     { path: '/mr-dashboard/projects', icon: <CubeIcon />, label: 'Projects', key: 'projects' },
-    { path: '/mr-dashboard/notifications', icon: <BellIcon />, label: 'Notifications', key: 'notifications' },
-    { path: '/mr-dashboard/analytics', icon: <BarChartIcon />, label: 'Analytics', key: 'analytics' },
-    { path: '/mr-dashboard/projects', icon: <BarChartIcon />, label: 'Projects', key: 'projects' },
+    // { path: '/mr-dashboard/notifications', icon: <BellIcon />, label: 'Notifications', key: 'notifications' },
+    // { path: '/mr-dashboard/analytics', icon: <BarChartIcon />, label: 'Analytics', key: 'analytics' },
+    // { path: '/mr-dashboard/projects', icon: <BarChartIcon />, label: 'Projects', key: 'projects' },
   ];
 
   return (

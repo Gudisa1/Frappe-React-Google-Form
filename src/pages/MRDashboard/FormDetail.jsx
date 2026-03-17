@@ -93,6 +93,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getSingleReportingForm, deleteReportingForm,fetchSubmissionsByForm  } from '../../api/datacollection';
 import './FormDetail.css';
 import * as XLSX from "xlsx";
+import {handleExportExcel} from '../../hooks/xl';
+import GoToDashboardButton  from '../../components/GoToDashboardButton';
+
 
 const FormDetail = () => {
   const { formName } = useParams();
@@ -140,33 +143,33 @@ const FormDetail = () => {
       alert('Failed to delete form: ' + err.message);
     }
   };
-const handleExportExcel = async () => {
-  console.log("Export button clicked"); // DEBUG
-  try {
-    const submissions = await fetchSubmissionsByForm(formName);
-    console.log("Fetched submissions:", submissions);
-    if (!submissions.length) {
-      alert("No submissions found for this form.");
-      return;
-    }
+// const handleExportExcel = async () => {
+//   console.log("Export button clicked"); // DEBUG
+//   try {
+//     const submissions = await fetchSubmissionsByForm(formName);
+//     console.log("Fetched submissions:", submissions);
+//     if (!submissions.length) {
+//       alert("No submissions found for this form.");
+//       return;
+//     }
 
-    const rows = submissions.map(sub => ({
-      Submission_ID: sub.name,
-      Project: sub.project,
-      Submitted_By: sub.submitted_by,
-      Status: sub.status,
-      ...sub.parsedData
-    }));
+//     const rows = submissions.map(sub => ({
+//       Submission_ID: sub.name,
+//       Project: sub.project,
+//       Submitted_By: sub.submitted_by,
+//       Status: sub.status,
+//       ...sub.parsedData
+//     }));
 
-    const worksheet = XLSX.utils.json_to_sheet(rows);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Submissions");
-    XLSX.writeFile(workbook, `${formName}_submissions.xlsx`);
-  } catch (error) {
-    console.error("Excel export failed:", error);
-    alert("Failed to export Excel.");
-  }
-};
+//     const worksheet = XLSX.utils.json_to_sheet(rows);
+//     const workbook = XLSX.utils.book_new();
+//     XLSX.utils.book_append_sheet(workbook, worksheet, "Submissions");
+//     XLSX.writeFile(workbook, `${formName}_submissions.xlsx`);
+//   } catch (error) {
+//     console.error("Excel export failed:", error);
+//     alert("Failed to export Excel.");
+//   }
+// };
 const handleViewSubmissions = () => {
   navigate(`/mr-dashboard/forms/${encodeURIComponent(formName)}/submissions`);
 };
@@ -203,6 +206,8 @@ const handleViewSubmissions = () => {
 
   return (
     <div className="form-detail-page">
+            <GoToDashboardButton />
+
       <div className="form-detail-content">
         {/* Navigation */}
         <nav className="detail-nav">
@@ -222,14 +227,23 @@ const handleViewSubmissions = () => {
                     <span>Submissions</span>
                   </button>
 
-                  <button onClick={handleExportExcel} className="nav-button">
+                  {/* <button onClick={handleExportExcel} className="nav-button">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                       <path d="M12 3v12"/>
                       <path d="M7 10l5 5 5-5"/>
                       <path d="M5 21h14"/>
                     </svg>
                     <span>Export Excel</span>
-          </button>
+                    
+          </button> */}
+<button onClick={() => handleExportExcel(formData?.form_name || formName)} className="nav-button">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              <span>Export to Excel</span>
+            </button>
             <button onClick={handleEdit} className="nav-button">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"/>

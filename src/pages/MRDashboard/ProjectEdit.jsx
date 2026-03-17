@@ -187,6 +187,8 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { fetchUsersWithRoles, updateProject, getProject } from "../../api/datacollection";
 import "./ProjectEdit.css";
+import Navigation from '../../components/Navigation';
+
 
 const ProjectEdit = () => {
   const navigate = useNavigate();
@@ -336,6 +338,7 @@ const ProjectEdit = () => {
   }
 
   return (
+    <Navigation>
     <div className="project-edit-container">
       <div className="edit-card">
         <div className="edit-header">
@@ -577,6 +580,7 @@ const ProjectEdit = () => {
         </div>
       </div>
     </div>
+    </Navigation>
   );
 };
 
