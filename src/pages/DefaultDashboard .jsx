@@ -1,8 +1,10 @@
-import React from 'react'
-
+import React, { useState, useEffect }from 'react'
+import LoginPage from "./LoginPage";
 const DefaultDashboard  = () => {
   return (
-    <div>DefaultDashboard </div>
+    <div>
+      <LoginPage />
+    </div>
   )
 }
 

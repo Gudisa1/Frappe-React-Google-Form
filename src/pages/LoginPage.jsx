@@ -30,8 +30,8 @@ const LoginPage = () => {
         navigate("/project-dashboard"); // Page for Project Manager
       } else if (roles.includes("Director")) {
         navigate("/director-dashboard"); // Page for Director
-      } else if (roles.includes("Asset&HR Manager")) {
-        navigate("/hr-asset-dashboard"); // Page for Asset&HR Manager
+      } else if (roles.includes("HR&Asset Manager")) {
+        navigate("/hr"); // Page for Asset&HR Manager
       } else {
         // fallback if role not recognized
         navigate("/dashboard");

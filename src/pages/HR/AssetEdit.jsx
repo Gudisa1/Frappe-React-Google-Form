@@ -54,7 +54,7 @@ const AssetEdit = () => {
       try {
         const assetData = await getAssetDetail(decodedName);
         const projectList = await getProjects();
-        setProjects(projectList);
+        setProjects(projectList.data);
 
         // 🔥 Normalize backend values safely
         const normalizedData = {

@@ -50,7 +50,8 @@ const Asset = () => {
     async function loadProjects() {
       try {
         const projectList = await getProjects();
-        setProjects(projectList);
+        console.log("📁 Projects loaded:", projectList);
+        setProjects(projectList.data);
       } catch (error) {
         console.error("Failed to load projects", error);
       }

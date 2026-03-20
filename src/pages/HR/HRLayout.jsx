@@ -63,7 +63,7 @@ const HRLayout = () => {
     },
     { 
       path: '/hr/asset', 
-      name: 'Asset', 
+      name: 'Create Asset', 
       icon: FiUsers,
       description: 'Manage Asset records'
     },

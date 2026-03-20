@@ -558,3 +558,327 @@ export const handleExportExcel = async (formName) => {
     alert(`Failed to export Excel: ${error.message || 'Unknown error'}`);
   }
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Format date for filename (e.g., 2024-01-15)
+const getFormattedDate = () => {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+// Format condition for display in Excel
+const formatCondition = (condition) => {
+  const conditionMap = {
+    'working': 'Working',
+    'repair': 'Under Repair',
+    'damaged': 'Damaged',
+    'lost': 'Lost',
+    'disposed': 'Disposed'
+  };
+  return conditionMap[condition?.toLowerCase()] || condition || 'Unknown';
+};
+
+// Prepare data for Excel export
+const prepareExportData = (assets) => {
+  if (!assets || assets.length === 0) return [];
+  
+  return assets.map(asset => ({
+    'Asset ID': asset.asset_id || 'N/A',
+    'Asset Code': asset.asset_code || 'N/A',
+    'Asset Name': asset.asset_name || 'N/A',
+    'Project': asset.project || 'N/A',
+    'Asset Type': asset.asset_type || 'N/A',
+    'Model': asset.model || 'N/A',
+    'Serial Number': asset.serial_number || 'N/A',
+    'Quantity': asset.quantity || 0,
+    'Condition': formatCondition(asset.condition),
+    'Notes': asset.notes || 'N/A',
+    'Owner': asset.owner || 'N/A',
+    'Created On': asset.creation ? new Date(asset.creation).toLocaleDateString() : 'N/A',
+    'Last Modified': asset.modified ? new Date(asset.modified).toLocaleDateString() : 'N/A'
+  }));
+};
+
+// ============================================
+// FUNCTION 1: Export filtered assets to Excel
+// ============================================
+export const exportAssetsToExcel = (assets, filters, searchTerm) => {
+  console.log('🚀 Exporting assets to Excel...', { 
+    assetCount: assets.length, 
+    filters, 
+    searchTerm 
+  });
+  
+  try {
+    // Validate assets
+    if (!assets || assets.length === 0) {
+      alert('No assets to export. The list is empty.');
+      return false;
+    }
+
+    // Prepare the data for export
+    const exportData = prepareExportData(assets);
+    
+    // Create a new workbook
+    const wb = XLSX.utils.book_new();
+    
+    // Convert JSON to worksheet
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(wb, ws, 'Assets');
+    
+    // Generate filename with filter information
+    let filterInfo = '';
+    if (filters.project !== 'all') filterInfo += `_${filters.project}`;
+    if (filters.assetType !== 'all') filterInfo += `_${filters.assetType}`;
+    if (filters.condition !== 'all') filterInfo += `_${filters.condition}`;
+    if (searchTerm) filterInfo += `_search`;
+    
+    // If no filters applied, use 'all'
+    if (!filterInfo) filterInfo = '_all';
+    
+    const fileName = `assets_export${filterInfo}_${getFormattedDate()}.xlsx`;
+    
+    // Save the file
+    XLSX.writeFile(wb, fileName);
+    
+    console.log('✅ Export successful!', fileName);
+    alert(`✅ Successfully exported ${assets.length} assets to Excel!`);
+    return true;
+    
+  } catch (error) {
+    console.error('❌ Export failed:', error);
+    alert('Export failed: ' + error.message);
+    return false;
+  }
+};
+
+// ============================================
+// FUNCTION 2: Generate Summary Report
+// ============================================
+export const exportSummaryToExcel = (assets, filters, searchTerm) => {
+  console.log('🚀 Generating summary report...', { 
+    assetCount: assets.length, 
+    filters, 
+    searchTerm 
+  });
+  
+  try {
+    // Validate assets
+    if (!assets || assets.length === 0) {
+      alert('No assets to generate summary. The list is empty.');
+      return false;
+    }
+
+    // Calculate summary statistics
+    const totalAssets = assets.length;
+    const working = assets.filter(a => a.condition?.toLowerCase() === 'working').length;
+    const repair = assets.filter(a => a.condition?.toLowerCase() === 'repair').length;
+    const damaged = assets.filter(a => a.condition?.toLowerCase() === 'damaged').length;
+    const lost = assets.filter(a => a.condition?.toLowerCase() === 'lost').length;
+    const disposed = assets.filter(a => a.condition?.toLowerCase() === 'disposed').length;
+    
+    // Get unique projects and their counts
+    const projectCounts = {};
+    assets.forEach(asset => {
+      if (asset.project) {
+        projectCounts[asset.project] = (projectCounts[asset.project] || 0) + 1;
+      }
+    });
+    
+    // Get unique asset types and their counts
+    const typeCounts = {};
+    assets.forEach(asset => {
+      if (asset.asset_type) {
+        typeCounts[asset.asset_type] = (typeCounts[asset.asset_type] || 0) + 1;
+      }
+    });
+
+    // Create a new workbook
+    const wb = XLSX.utils.book_new();
+
+    // ===== SHEET 1: Executive Summary =====
+    const summaryData = [
+      ['ASSET MANAGEMENT EXECUTIVE SUMMARY'],
+      [`Generated: ${new Date().toLocaleString()}`],
+      [],
+      ['APPLIED FILTERS'],
+      ['Project:', filters.project !== 'all' ? filters.project : 'All Projects'],
+      ['Asset Type:', filters.assetType !== 'all' ? filters.assetType : 'All Types'],
+      ['Condition:', filters.condition !== 'all' ? filters.condition : 'All Conditions'],
+      ['Search Term:', searchTerm || 'None'],
+      [],
+      ['OVERALL STATISTICS'],
+      ['Total Assets', totalAssets],
+      ['Total Unique Projects', Object.keys(projectCounts).length],
+      ['Total Asset Types', Object.keys(typeCounts).length],
+      [],
+      ['ASSETS BY CONDITION'],
+      ['Working', working, `${((working/totalAssets)*100).toFixed(1)}%`],
+      ['Under Repair', repair, `${((repair/totalAssets)*100).toFixed(1)}%`],
+      ['Damaged', damaged, `${((damaged/totalAssets)*100).toFixed(1)}%`],
+      ['Lost', lost, `${((lost/totalAssets)*100).toFixed(1)}%`],
+      ['Disposed', disposed, `${((disposed/totalAssets)*100).toFixed(1)}%`]
+    ];
+
+    const summaryWs = XLSX.utils.aoa_to_sheet(summaryData);
+    XLSX.utils.book_append_sheet(wb, summaryWs, 'Executive Summary');
+
+    // ===== SHEET 2: Assets by Project =====
+    const projectData = [
+      ['ASSETS BY PROJECT'],
+      ['Project', 'Number of Assets', 'Percentage']
+    ];
+    
+    Object.entries(projectCounts)
+      .sort((a, b) => b[1] - a[1])
+      .forEach(([project, count]) => {
+        projectData.push([
+          project, 
+          count, 
+          `${((count / totalAssets) * 100).toFixed(1)}%`
+        ]);
+      });
+    
+    projectData.push(['TOTAL', totalAssets, '100%']);
+    
+    const projectWs = XLSX.utils.aoa_to_sheet(projectData);
+    XLSX.utils.book_append_sheet(wb, projectWs, 'By Project');
+
+    // ===== SHEET 3: Assets by Type =====
+    const typeData = [
+      ['ASSETS BY TYPE'],
+      ['Asset Type', 'Number of Assets', 'Percentage']
+    ];
+    
+    Object.entries(typeCounts)
+      .sort((a, b) => b[1] - a[1])
+      .forEach(([type, count]) => {
+        typeData.push([
+          type, 
+          count, 
+          `${((count / totalAssets) * 100).toFixed(1)}%`
+        ]);
+      });
+    
+    typeData.push(['TOTAL', totalAssets, '100%']);
+    
+    const typeWs = XLSX.utils.aoa_to_sheet(typeData);
+    XLSX.utils.book_append_sheet(wb, typeWs, 'By Type');
+
+    // ===== SHEET 4: Detailed Asset List =====
+    const exportData = prepareExportData(assets);
+    const detailsWs = XLSX.utils.json_to_sheet(exportData);
+    XLSX.utils.book_append_sheet(wb, detailsWs, 'Detailed Assets');
+
+    // ===== SHEET 5: Assets Needing Attention (Damaged/Repair) =====
+    const attentionAssets = assets.filter(a => 
+      a.condition?.toLowerCase() === 'damaged' || 
+      a.condition?.toLowerCase() === 'repair'
+    );
+    
+    if (attentionAssets.length > 0) {
+      const attentionData = attentionAssets.map(asset => ({
+        'Asset ID': asset.asset_id || 'N/A',
+        'Asset Name': asset.asset_name || 'N/A',
+        'Project': asset.project || 'N/A',
+        'Condition': formatCondition(asset.condition),
+        'Model': asset.model || 'N/A',
+        'Serial Number': asset.serial_number || 'N/A',
+        'Notes': asset.notes || 'N/A'
+      }));
+      
+      const attentionWs = XLSX.utils.json_to_sheet(attentionData);
+      XLSX.utils.book_append_sheet(wb, attentionWs, 'Needs Attention');
+    }
+
+    // Save the file
+    const fileName = `asset_summary_report_${getFormattedDate()}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+    
+    console.log('✅ Summary report generated successfully!', fileName);
+    alert(`✅ Successfully generated summary report for ${assets.length} assets!`);
+    return true;
+    
+  } catch (error) {
+    console.error('❌ Summary export failed:', error);
+    alert('Summary export failed: ' + error.message);
+    return false;
+  }
+};
+
+// ============================================
+// BONUS: Export as CSV (alternative format)
+// ============================================
+export const exportAssetsToCSV = (assets, filters, searchTerm) => {
+  try {
+    if (!assets || assets.length === 0) {
+      alert('No assets to export');
+      return false;
+    }
+
+    // Prepare headers
+    const headers = ['Asset ID', 'Asset Code', 'Asset Name', 'Project', 'Type', 'Model', 'Serial Number', 'Quantity', 'Condition', 'Notes'];
+    
+    // Prepare rows
+    const rows = assets.map(asset => [
+      asset.asset_id || 'N/A',
+      asset.asset_code || 'N/A',
+      asset.asset_name || 'N/A',
+      asset.project || 'N/A',
+      asset.asset_type || 'N/A',
+      asset.model || 'N/A',
+      asset.serial_number || 'N/A',
+      asset.quantity || 0,
+      formatCondition(asset.condition),
+      asset.notes || 'N/A'
+    ]);
+
+    // Combine headers and rows
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    // Create download link
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    let filterInfo = '';
+    if (filters.project !== 'all') filterInfo += `_${filters.project}`;
+    if (filters.assetType !== 'all') filterInfo += `_${filters.assetType}`;
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `assets_export${filterInfo || '_all'}_${getFormattedDate()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    alert(`✅ Successfully exported ${assets.length} assets to CSV!`);
+    return true;
+  } catch (error) {
+    console.error('❌ CSV export failed:', error);
+    alert('CSV export failed: ' + error.message);
+    return false;
+  }
+};

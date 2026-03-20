@@ -15,7 +15,7 @@ export const createEmployee = async (data) => {
 
 export const getEmployees = async () => {
   // You can include filters, fields, pagination if needed
-  const url = '/api/resource/Employee?fields=["employee_id","first_name","last_name","job_title","location","status","medical_used","medical_max_limit"]&limit_start=0&limit_page_length=100';
+  const url = '/api/resource/Employee?fields=["*"]&limit_page_length=1000';
 
   const res = await fetch(url, {
     method: 'GET',
@@ -223,16 +223,39 @@ export async function createAsset(assetData) {
   return data.data;
 }
 
+// export async function getAssets() {
+//   const response = await fetch(
+//     `/api/resource/Asset?fields=["name","asset_id","asset_code","project","asset_type","condition"]&limit_page_length=100`,
+//     { credentials: "include" }
+//   );
+//   const data = await response.json();
+//   return data.data;
+// }
+
 export async function getAssets() {
   const response = await fetch(
-    `/api/resource/Asset?fields=["name","asset_id","asset_code","project","asset_type","condition"]&limit_page_length=100`,
+    `/api/resource/Asset?fields=["*"]&limit_page_length=1000`,
     { credentials: "include" }
   );
   const data = await response.json();
   return data.data;
 }
 
-
+// Also add a function to fetch projects if needed
+export async function getProjects() {
+  try {
+    const response = await fetch(
+      `/api/resource/Project?fields=["name"]&limit_page_length=1000`,
+      { credentials: "include" }
+    );
+    const data = await response.json();
+    // Extract just the project names from the response
+    return data.data.map(project => project.name);
+  } catch (error) {
+    console.error("Failed to fetch projects", error);
+    return [];
+  }
+}
 
 // Delete asset by DocType name
 export async function deleteAsset(name) {
