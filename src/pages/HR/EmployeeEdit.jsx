@@ -1,233 +1,216 @@
-// pages/HR/EmployeeEdit.jsx
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import {
-  FiUser,
-  FiPhone,
-  FiMail,
-  FiMapPin,
-  FiBriefcase,
-  FiCalendar,
-  FiHeart,
-  FiSave,
-  FiX,
-  FiArrowLeft,
-  FiAlertCircle,
-  FiCheckCircle,
-  FiInfo,
-  FiChevronDown,
-  FiChevronUp
-} from 'react-icons/fi';
-import './EmployeeEdit.css';
-import { updateEmployee, getEmployee } from '../../api/hrapi';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { getEmployee, updateEmployee } from '../../api/hrapi';
+import './EmployeeDetail.css';
 
 const EmployeeEdit = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [showError, setShowError] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [activeSections, setActiveSections] = useState({
-    personal: true,
-    emergency: false,
-    employment: false,
-    medical: false
-  });
-
+  const [error, setError] = useState(null);
+  const [toast, setToast] = useState(null);
   const [formData, setFormData] = useState({
-    // Personal Information
     first_name: '',
     last_name: '',
-    full_name: '',
     date_of_birth: '',
     gender: '',
     phone: '',
     email: '',
     address: '',
-    
-    // Emergency Contact
     emergency_contact_name: '',
     emergency_contact_relationship: '',
     emergency_contact_phone: '',
-    
-    // Employment Information
     employee_id: '',
     job_title: '',
     department: '',
     location: '',
     employment_start_date: '',
-    status: '',
-    
-    // Medical Allowance
-    medical_max_limit: 30000,
-    medical_used: 0
+    employment_end_date: '',
+    status: 'Active',
+    project: ''
   });
 
-  const [errors, setErrors] = useState({});
-  const [touched, setTouched] = useState({});
-  const [originalData, setOriginalData] = useState(null);
+  // Status options for employee
+  const statusOptions = [
+    "Newly Hired",
+    "Active",
+    "Probation",
+    "Contract Ended",
+    "Resigned",
+    "Retired"
+  ];
 
-  // Fetch employee data
+  // Gender options
+  const genderOptions = ["Male", "Female", "Other"];
+
   useEffect(() => {
-    const fetchEmployee = async () => {
-      try {
-        setLoading(true);
-        console.log("Fetching employee with ID:", id);
-        
-        const data = await getEmployee(id);
-        console.log("API Response:", data);
-
-        if (!data) {
-          throw new Error('No data received from server');
-        }
-
-        // Map API fields to form state - using the actual field names from the API
-        const mappedData = {
-          // Personal
-          first_name: data.first_name || '',
-          last_name: data.last_name || '',
-          full_name: data.full_name || '',
-          date_of_birth: data.date_of_birth || '',
-          gender: data.gender || '',
-          phone: data.phone || '',
-          email: data.email || '',
-          address: data.address || '',
-          
-          // Emergency
-          emergency_contact_name: data.emergency_contact_name || '',
-          emergency_contact_relationship: data.emergency_contact_relationship || '',
-          emergency_contact_phone: data.emergency_contact_phone || '',
-          
-          // Employment
-          employee_id: data.employee_id || '',
-          job_title: data.job_title || '',
-          department: data.department || '',
-          location: data.location || '',
-          employment_start_date: data.employment_start_date || '',
-          status: data.status || '',
-          
-          // Medical
-          medical_max_limit: data.medical_max_limit || 30000,
-          medical_used: data.medical_used || 0
-        };
-
-        console.log("Mapped form data:", mappedData);
-        setFormData(mappedData);
-        setOriginalData(mappedData);
-        
-      } catch (err) {
-        console.error('Failed to fetch employee:', err);
-        setErrorMessage(err.message || 'Failed to load employee data');
-        setShowError(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (id) {
-      fetchEmployee();
-    }
+    if (!id) return;
+    fetchEmployeeData();
   }, [id]);
 
-  // Validation rules
-  const validations = {
-    first_name: { required: true, min: 2, max: 50 },
-    last_name: { required: true, min: 2, max: 50 },
-    date_of_birth: { required: true },
-    gender: { required: true },
-    phone: { required: true, pattern: /^\+?[\d\s-]{10,}$/ },
-    email: { required: true, pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
-    address: { required: true, min: 5 },
-    emergency_contact_name: { required: true },
-    emergency_contact_relationship: { required: true },
-    emergency_contact_phone: { required: true, pattern: /^\+?[\d\s-]{10,}$/ },
-    employee_id: { required: true, pattern: /^[A-Z0-9]{3,10}$/ },
-    job_title: { required: true },
-    department: { required: true },
-    location: { required: true },
-    employment_start_date: { required: true }
+  const fetchEmployeeData = async () => {
+    try {
+      setLoading(true);
+      const response = await getEmployee(id);
+      
+      // Populate form with employee data
+      setFormData({
+        first_name: response.first_name || '',
+        last_name: response.last_name || '',
+        date_of_birth: response.date_of_birth || '',
+        gender: response.gender || '',
+        phone: response.phone || '',
+        email: response.email || '',
+        address: response.address || '',
+        emergency_contact_name: response.emergency_contact_name || '',
+        emergency_contact_relationship: response.emergency_contact_relationship || '',
+        emergency_contact_phone: response.emergency_contact_phone || '',
+        employee_id: response.employee_id || '',
+        job_title: response.job_title || '',
+        department: response.department || '',
+        location: response.location || '',
+        employment_start_date: response.employment_start_date || '',
+        employment_end_date: response.employment_end_date || '',
+        status: response.status || 'Active',
+        project: response.project || ''
+      });
+      
+      setError(null);
+    } catch (error) {
+      console.error('Error fetching employee:', error);
+      const errorMessage = extractErrorMessage(error);
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Validate field
-  const validateField = (field, value) => {
-    const rules = validations[field];
-    if (!rules) return '';
-
-    if (rules.required && !value) return `${field.replace(/_/g, ' ')} is required`;
-    if (rules.min && value?.length < rules.min) return `Minimum ${rules.min} characters required`;
-    if (rules.max && value?.length > rules.max) return `Maximum ${rules.max} characters allowed`;
-    if (rules.pattern && !rules.pattern.test(value)) return `Invalid ${field.replace(/_/g, ' ')} format`;
+  // Extract detailed error message from backend response
+  const extractErrorMessage = (error) => {
+    if (error.response) {
+      const { data, status } = error.response;
+      
+      if (data) {
+        if (data.exception) {
+          return data.exception;
+        }
+        if (data.message) {
+          return data.message;
+        }
+        if (data._server_messages) {
+          try {
+            const messages = JSON.parse(data._server_messages);
+            if (messages && messages.length > 0) {
+              return messages[0];
+            }
+          } catch (e) {
+            return data._server_messages;
+          }
+        }
+        if (data.error) {
+          return data.error;
+        }
+        if (typeof data === 'string') {
+          return data;
+        }
+      }
+      
+      if (status === 404) return 'Resource not found';
+      if (status === 403) return 'You do not have permission to perform this action';
+      if (status === 401) return 'Authentication required. Please log in again.';
+      if (status === 500) return 'Server error. Please try again later.';
+    }
     
-    return '';
+    if (error.message) {
+      return error.message;
+    }
+    
+    return 'An unexpected error occurred. Please try again.';
   };
 
-  // Handle input change
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+  const showToast = (message, type = "success") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 5000);
+  };
 
-    // Auto-generate full_name if first_name or last_name changes
-    if (field === 'first_name' || field === 'last_name') {
-      const firstName = field === 'first_name' ? value : formData.first_name;
-      const lastName = field === 'last_name' ? value : formData.last_name;
-      if (firstName && lastName) {
-        setFormData(prev => ({
-          ...prev,
-          full_name: `${firstName} ${lastName}`.trim()
-        }));
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const validateForm = () => {
+    // Required fields validation
+    if (!formData.first_name) return 'First Name is required';
+    if (!formData.last_name) return 'Last Name is required';
+    if (!formData.date_of_birth) return 'Date of Birth is required';
+    if (!formData.phone) return 'Phone is required';
+    if (!formData.email) return 'Email is required';
+    if (!formData.address) return 'Address is required';
+    if (!formData.emergency_contact_name) return 'Emergency Contact Name is required';
+    if (!formData.emergency_contact_relationship) return 'Emergency Contact Relationship is required';
+    if (!formData.emergency_contact_phone) return 'Emergency Contact Phone is required';
+    if (!formData.employee_id) return 'Employee ID is required';
+    if (!formData.job_title) return 'Job Title is required';
+    if (!formData.department) return 'Department is required';
+    if (!formData.location) return 'Location is required';
+    if (!formData.employment_start_date) return 'Employment Start Date is required';
+    if (!formData.status) return 'Status is required';
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      return 'Please enter a valid email address';
+    }
+
+    // Phone validation (basic)
+    const phoneRegex = /^[0-9+\-\s()]{10,}$/;
+    if (!phoneRegex.test(formData.phone)) {
+      return 'Please enter a valid phone number';
+    }
+
+    // Date validation
+    if (formData.date_of_birth) {
+      const dob = new Date(formData.date_of_birth);
+      const today = new Date();
+      const age = today.getFullYear() - dob.getFullYear();
+      if (age < 18) {
+        return 'Employee must be at least 18 years old';
+      }
+      if (age > 100) {
+        return 'Please enter a valid date of birth';
       }
     }
 
-    // Validate field
-    const error = validateField(field, value);
-    setErrors(prev => ({ ...prev, [field]: error }));
+    // Employment date validation
+    if (formData.employment_start_date && formData.employment_end_date) {
+      const startDate = new Date(formData.employment_start_date);
+      const endDate = new Date(formData.employment_end_date);
+      if (endDate < startDate) {
+        return 'Employment End Date cannot be before Start Date';
+      }
+    }
+
+    return null;
   };
 
-  // Handle blur
-  const handleBlur = (field) => {
-    setTouched(prev => ({ ...prev, [field]: true }));
-  };
-
-  // Validate entire form
-  const validateForm = () => {
-    const newErrors = {};
-    const fieldsToValidate = [
-      'first_name', 'last_name', 'date_of_birth', 'gender', 'phone', 'email', 'address',
-      'emergency_contact_name', 'emergency_contact_relationship', 'emergency_contact_phone',
-      'employee_id', 'job_title', 'department', 'location', 'employment_start_date'
-    ];
-
-    fieldsToValidate.forEach(field => {
-      const error = validateField(field, formData[field]);
-      if (error) newErrors[field] = error;
-    });
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  // Handle submit
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!validateForm()) {
-      setErrorMessage('Please fix the errors before submitting');
-      setShowError(true);
+    
+    const validationError = validateForm();
+    if (validationError) {
+      showToast(validationError, "error");
       return;
     }
 
     setSaving(true);
-    setShowError(false);
-
-    // Prepare payload - only send the fields that can be updated
+    
+    // Prepare payload - only main fields, no child tables
     const payload = {
       first_name: formData.first_name,
       last_name: formData.last_name,
-      full_name: formData.full_name || `${formData.first_name} ${formData.last_name}`.trim(),
+      full_name: `${formData.first_name} ${formData.last_name}`,
       date_of_birth: formData.date_of_birth,
       gender: formData.gender,
       phone: formData.phone,
@@ -236,602 +219,357 @@ const EmployeeEdit = () => {
       emergency_contact_name: formData.emergency_contact_name,
       emergency_contact_relationship: formData.emergency_contact_relationship,
       emergency_contact_phone: formData.emergency_contact_phone,
+      employee_id: formData.employee_id,
       job_title: formData.job_title,
       department: formData.department,
       location: formData.location,
       employment_start_date: formData.employment_start_date,
+      employment_end_date: formData.employment_end_date || null,
       status: formData.status,
-      medical_max_limit: formData.medical_max_limit,
-      medical_used: formData.medical_used
+      project: formData.project
     };
 
-    console.log("STEP 1: Form validated successfully");
-    console.log("STEP 2: Update payload:", payload);
-    console.log("STEP 3: Calling updateEmployee API...");
-
     try {
-      const response = await updateEmployee(id, payload);
-      console.log("STEP 4: Server responded:", response);
-      console.log("STEP 5: Employee updated successfully");
-
-      setShowSuccess(true);
-      
-      // Navigate back after 2 seconds
+      const updated = await updateEmployee(id, payload);
+      showToast('Employee updated successfully! ✅', "success");
       setTimeout(() => {
-        navigate(`/hr/employees/${id}`);
-      }, 2000);
-
+        navigate(`/hr/employee/${id}`);
+      }, 1500);
     } catch (error) {
-      console.error("STEP ERROR:", error);
-      setErrorMessage(error.message || 'Failed to update employee');
-      setShowError(true);
+      console.error('Error updating employee:', error);
+      const errorMessage = extractErrorMessage(error);
+      showToast(`Failed to update employee: ${errorMessage}`, "error");
     } finally {
       setSaving(false);
     }
   };
 
-  // Handle cancel
   const handleCancel = () => {
-    if (JSON.stringify(formData) !== JSON.stringify(originalData)) {
-      if (window.confirm('You have unsaved changes. Are you sure you want to leave?')) {
-        navigate(`/hr/employees/${id}`);
-      }
-    } else {
-      navigate(`/hr/employees/${id}`);
-    }
+    navigate(`/hr/employee/${id}`);
   };
 
-  // Toggle section
-  const toggleSection = (section) => {
-    setActiveSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
-  };
-
-  // Get field error
-  const getFieldError = (field) => {
-    return touched[field] ? errors[field] : '';
-  };
-
-  // Status options
-  const statusOptions = [
-    { value: 'Active', label: 'Active' },
-    { value: 'Newly Hired', label: 'Newly Hired' },
-    { value: 'Probation', label: 'Probation' },
-    { value: 'Notice Period', label: 'Notice Period' },
-    { value: 'Contract Ended', label: 'Contract Ended' },
-    { value: 'Resigned', label: 'Resigned' },
-    { value: 'Retired', label: 'Retired' }
-  ];
-
-  // Gender options
-  const genderOptions = ['Male', 'Female', 'Other'];
-
-  if (loading) {
-    return (
-      <div className="edit-loading">
-        <div className="loading-spinner"></div>
-        <p>Loading employee data...</p>
+  if (loading) return (
+    <div className="loading-container">
+      <div className="loader"></div>
+      <p>Loading employee data...</p>
+    </div>
+  );
+  
+  if (error) return (
+    <div className="error-container">
+      <span className="error-icon">⚠️</span>
+      <div className="error-details">
+        <h3>Error Loading Employee</h3>
+        <p>{error}</p>
+        <button onClick={fetchEmployeeData} className="btn-retry">Try Again</button>
+        <button onClick={() => navigate('/hr')} className="btn-cancel" style={{ marginLeft: '1rem' }}>Back to Dashboard</button>
       </div>
-    );
-  }
+    </div>
+  );
 
   return (
-    <div className="employee-edit">
-      {/* Header */}
-      <div className="edit-header">
-        <div className="header-left">
-          <button className="back-button" onClick={handleCancel}>
-            <FiArrowLeft size={20} />
-          </button>
-          <div className="header-info">
-            <h1 className="edit-title">Edit Employee</h1>
-            <div className="header-breadcrumb">
-              <Link to="/hr/employees">Employees</Link>
-              <span>/</span>
-              <span className="current">{formData.first_name} {formData.last_name}</span>
-            </div>
+    <div className="employee-edit-container">
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`toast toast-${toast.type}`}>
+          <div className="toast-content">
+            <span className="toast-icon">
+              {toast.type === 'success' ? '✅' : '❌'}
+            </span>
+            <span className="toast-message">{toast.message}</span>
           </div>
         </div>
-        <div className="header-right">
-          <button className="btn-outline" onClick={handleCancel} disabled={saving}>
-            <FiX size={18} />
-            <span>Cancel</span>
-          </button>
-          <button 
-            className="btn-primary" 
-            onClick={handleSubmit}
-            disabled={saving}
-          >
-            {saving ? (
-              <>
-                <div className="spinner"></div>
-                <span>Saving...</span>
-              </>
-            ) : (
-              <>
-                <FiSave size={18} />
-                <span>Save Changes</span>
-              </>
-            )}
-          </button>
+      )}
+
+      <div className="edit-wrapper">
+        {/* Header */}
+        <div className="edit-header">
+          <div className="header-left">
+            <h1>Edit Employee</h1>
+            <p>Update employee information for {formData.first_name} {formData.last_name}</p>
+          </div>
+          <div className="employee-id-badge-large">
+            ID: {formData.employee_id}
+          </div>
         </div>
+
+        <form onSubmit={handleSubmit} className="edit-form">
+          {/* Personal Information Section */}
+          <div className="form-section">
+            <div className="section-header">
+              <span className="section-icon">👤</span>
+              <h2>Personal Information</h2>
+            </div>
+            <div className="form-grid">
+              <div className="form-group">
+                <label>First Name *</label>
+                <input
+                  type="text"
+                  name="first_name"
+                  value={formData.first_name}
+                  onChange={handleChange}
+                  placeholder="Enter first name"
+                  className="form-input"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Last Name *</label>
+                <input
+                  type="text"
+                  name="last_name"
+                  value={formData.last_name}
+                  onChange={handleChange}
+                  placeholder="Enter last name"
+                  className="form-input"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Employee ID *</label>
+                <input
+                  type="text"
+                  name="employee_id"
+                  value={formData.employee_id}
+                  onChange={handleChange}
+                  placeholder="Enter employee ID"
+                  className="form-input"
+                  readOnly
+                  disabled
+                />
+                <small className="field-hint">Employee ID cannot be changed</small>
+              </div>
+
+              <div className="form-group">
+                <label>Date of Birth *</label>
+                <input
+                  type="date"
+                  name="date_of_birth"
+                  value={formData.date_of_birth}
+                  onChange={handleChange}
+                  className="form-input"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Gender</label>
+                <select
+                  name="gender"
+                  value={formData.gender}
+                  onChange={handleChange}
+                  className="form-select"
+                >
+                  <option value="">Select Gender</option>
+                  {genderOptions.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Phone *</label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder="Enter phone number"
+                  className="form-input"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Email *</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="Enter email address"
+                  className="form-input"
+                />
+              </div>
+
+              <div className="form-group full-width">
+                <label>Address *</label>
+                <textarea
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  placeholder="Enter address"
+                  rows="3"
+                  className="form-input"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Employment Information Section */}
+          <div className="form-section">
+            <div className="section-header">
+              <span className="section-icon">💼</span>
+              <h2>Employment Information</h2>
+            </div>
+            <div className="form-grid">
+              <div className="form-group">
+                <label>Job Title *</label>
+                <input
+                  type="text"
+                  name="job_title"
+                  value={formData.job_title}
+                  onChange={handleChange}
+                  placeholder="Enter job title"
+                  className="form-input"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Department *</label>
+                <input
+                  type="text"
+                  name="department"
+                  value={formData.department}
+                  onChange={handleChange}
+                  placeholder="Enter department"
+                  className="form-input"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Location *</label>
+                <input
+                  type="text"
+                  name="location"
+                  value={formData.location}
+                  onChange={handleChange}
+                  placeholder="Enter location"
+                  className="form-input"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Project</label>
+                <input
+                  type="text"
+                  name="project"
+                  value={formData.project}
+                  onChange={handleChange}
+                  placeholder="Enter project name"
+                  className="form-input"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Employment Start Date *</label>
+                <input
+                  type="date"
+                  name="employment_start_date"
+                  value={formData.employment_start_date}
+                  onChange={handleChange}
+                  className="form-input"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Employment End Date</label>
+                <input
+                  type="date"
+                  name="employment_end_date"
+                  value={formData.employment_end_date || ''}
+                  onChange={handleChange}
+                  className="form-input"
+                />
+                <small className="field-hint">Leave blank if currently employed</small>
+              </div>
+
+              <div className="form-group">
+                <label>Status *</label>
+                <select
+                  name="status"
+                  value={formData.status}
+                  onChange={handleChange}
+                  className="form-select"
+                >
+                  {statusOptions.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Emergency Contact Section */}
+          <div className="form-section">
+            <div className="section-header">
+              <span className="section-icon">🚨</span>
+              <h2>Emergency Contact</h2>
+            </div>
+            <div className="form-grid">
+              <div className="form-group">
+                <label>Contact Name *</label>
+                <input
+                  type="text"
+                  name="emergency_contact_name"
+                  value={formData.emergency_contact_name}
+                  onChange={handleChange}
+                  placeholder="Enter emergency contact name"
+                  className="form-input"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Relationship *</label>
+                <input
+                  type="text"
+                  name="emergency_contact_relationship"
+                  value={formData.emergency_contact_relationship}
+                  onChange={handleChange}
+                  placeholder="Enter relationship"
+                  className="form-input"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Emergency Phone *</label>
+                <input
+                  type="tel"
+                  name="emergency_contact_phone"
+                  value={formData.emergency_contact_phone}
+                  onChange={handleChange}
+                  placeholder="Enter emergency phone number"
+                  className="form-input"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Form Actions */}
+          <div className="form-actions">
+            <button 
+              type="button" 
+              onClick={handleCancel} 
+              className="btn btn-secondary"
+              disabled={saving}
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit" 
+              className="btn btn-primary"
+              disabled={saving}
+            >
+              {saving ? (
+                <>
+                  <span className="spinner"></span>
+                  Saving...
+                </>
+              ) : (
+                'Save Changes'
+              )}
+            </button>
+          </div>
+        </form>
       </div>
-
-      {/* Success/Error Messages */}
-      {showSuccess && (
-        <div className="status-message success">
-          <FiCheckCircle size={20} />
-          <div className="message-content">
-            <h4>Changes Saved Successfully</h4>
-            <p>Employee information has been updated. Redirecting...</p>
-          </div>
-        </div>
-      )}
-
-      {showError && (
-        <div className="status-message error">
-          <FiAlertCircle size={20} />
-          <div className="message-content">
-            <h4>Error Saving Changes</h4>
-            <p>{errorMessage}</p>
-          </div>
-          <button className="close-btn" onClick={() => setShowError(false)}>
-            <FiX size={18} />
-          </button>
-        </div>
-      )}
-
-      {/* Edit Form */}
-      <form onSubmit={handleSubmit} className="edit-form">
-        {/* Section 1: Personal Information */}
-        <div className={`form-section ${activeSections.personal ? 'active' : ''}`}>
-          <div className="section-header" onClick={() => toggleSection('personal')}>
-            <div className="section-title">
-              <div className="section-icon">
-                <FiUser />
-              </div>
-              <div>
-                <h2>Personal Information</h2>
-                <p className="section-subtitle">Basic details about the employee</p>
-              </div>
-            </div>
-            <button type="button" className="section-toggle">
-              {activeSections.personal ? <FiChevronUp /> : <FiChevronDown />}
-            </button>
-          </div>
-          
-          {activeSections.personal && (
-            <div className="section-content">
-              <div className="form-fields">
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label">
-                      First Name <span className="required">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      className={`form-input ${getFieldError('first_name') ? 'error' : ''}`}
-                      value={formData.first_name}
-                      onChange={(e) => handleInputChange('first_name', e.target.value)}
-                      onBlur={() => handleBlur('first_name')}
-                      placeholder="Enter first name"
-                    />
-                    {getFieldError('first_name') && (
-                      <span className="error-message">{getFieldError('first_name')}</span>
-                    )}
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">
-                      Last Name <span className="required">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      className={`form-input ${getFieldError('last_name') ? 'error' : ''}`}
-                      value={formData.last_name}
-                      onChange={(e) => handleInputChange('last_name', e.target.value)}
-                      onBlur={() => handleBlur('last_name')}
-                      placeholder="Enter last name"
-                    />
-                    {getFieldError('last_name') && (
-                      <span className="error-message">{getFieldError('last_name')}</span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label">
-                      Date of Birth <span className="required">*</span>
-                    </label>
-                    <input
-                      type="date"
-                      className={`form-input ${getFieldError('date_of_birth') ? 'error' : ''}`}
-                      value={formData.date_of_birth}
-                      onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
-                      onBlur={() => handleBlur('date_of_birth')}
-                    />
-                    {getFieldError('date_of_birth') && (
-                      <span className="error-message">{getFieldError('date_of_birth')}</span>
-                    )}
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">
-                      Gender <span className="required">*</span>
-                    </label>
-                    <select
-                      className={`form-select ${getFieldError('gender') ? 'error' : ''}`}
-                      value={formData.gender}
-                      onChange={(e) => handleInputChange('gender', e.target.value)}
-                      onBlur={() => handleBlur('gender')}
-                    >
-                      <option value="">Select gender</option>
-                      {genderOptions.map(option => (
-                        <option key={option} value={option}>{option}</option>
-                      ))}
-                    </select>
-                    {getFieldError('gender') && (
-                      <span className="error-message">{getFieldError('gender')}</span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label">
-                      Phone <span className="required">*</span>
-                    </label>
-                    <input
-                      type="tel"
-                      className={`form-input ${getFieldError('phone') ? 'error' : ''}`}
-                      value={formData.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
-                      onBlur={() => handleBlur('phone')}
-                      placeholder="+251 911 123 456"
-                    />
-                    {getFieldError('phone') && (
-                      <span className="error-message">{getFieldError('phone')}</span>
-                    )}
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">
-                      Email <span className="required">*</span>
-                    </label>
-                    <input
-                      type="email"
-                      className={`form-input ${getFieldError('email') ? 'error' : ''}`}
-                      value={formData.email}
-                      onChange={(e) => handleInputChange('email', e.target.value)}
-                      onBlur={() => handleBlur('email')}
-                      placeholder="john.doe@company.com"
-                    />
-                    {getFieldError('email') && (
-                      <span className="error-message">{getFieldError('email')}</span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="form-group full-width">
-                  <label className="form-label">
-                    Address <span className="required">*</span>
-                  </label>
-                  <textarea
-                    className={`form-textarea ${getFieldError('address') ? 'error' : ''}`}
-                    value={formData.address}
-                    onChange={(e) => handleInputChange('address', e.target.value)}
-                    onBlur={() => handleBlur('address')}
-                    placeholder="Enter full address"
-                    rows="3"
-                  />
-                  {getFieldError('address') && (
-                    <span className="error-message">{getFieldError('address')}</span>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Section 2: Emergency Contact */}
-        <div className={`form-section ${activeSections.emergency ? 'active' : ''}`}>
-          <div className="section-header" onClick={() => toggleSection('emergency')}>
-            <div className="section-title">
-              <div className="section-icon">
-                <FiPhone />
-              </div>
-              <div>
-                <h2>Emergency Contact</h2>
-                <p className="section-subtitle">Who to contact in case of emergency</p>
-              </div>
-            </div>
-            <button type="button" className="section-toggle">
-              {activeSections.emergency ? <FiChevronUp /> : <FiChevronDown />}
-            </button>
-          </div>
-          
-          {activeSections.emergency && (
-            <div className="section-content">
-              <div className="form-fields">
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label">
-                      Contact Name <span className="required">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      className={`form-input ${getFieldError('emergency_contact_name') ? 'error' : ''}`}
-                      value={formData.emergency_contact_name}
-                      onChange={(e) => handleInputChange('emergency_contact_name', e.target.value)}
-                      onBlur={() => handleBlur('emergency_contact_name')}
-                      placeholder="Full name of emergency contact"
-                    />
-                    {getFieldError('emergency_contact_name') && (
-                      <span className="error-message">{getFieldError('emergency_contact_name')}</span>
-                    )}
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">
-                      Relationship <span className="required">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      className={`form-input ${getFieldError('emergency_contact_relationship') ? 'error' : ''}`}
-                      value={formData.emergency_contact_relationship}
-                      onChange={(e) => handleInputChange('emergency_contact_relationship', e.target.value)}
-                      onBlur={() => handleBlur('emergency_contact_relationship')}
-                      placeholder="e.g., Spouse, Parent, Sibling"
-                    />
-                    {getFieldError('emergency_contact_relationship') && (
-                      <span className="error-message">{getFieldError('emergency_contact_relationship')}</span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label">
-                      Phone Number <span className="required">*</span>
-                    </label>
-                    <input
-                      type="tel"
-                      className={`form-input ${getFieldError('emergency_contact_phone') ? 'error' : ''}`}
-                      value={formData.emergency_contact_phone}
-                      onChange={(e) => handleInputChange('emergency_contact_phone', e.target.value)}
-                      onBlur={() => handleBlur('emergency_contact_phone')}
-                      placeholder="Primary contact number"
-                    />
-                    {getFieldError('emergency_contact_phone') && (
-                      <span className="error-message">{getFieldError('emergency_contact_phone')}</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Section 3: Employment Information */}
-        <div className={`form-section ${activeSections.employment ? 'active' : ''}`}>
-          <div className="section-header" onClick={() => toggleSection('employment')}>
-            <div className="section-title">
-              <div className="section-icon">
-                <FiBriefcase />
-              </div>
-              <div>
-                <h2>Employment Information</h2>
-                <p className="section-subtitle">Job details and employment status</p>
-              </div>
-            </div>
-            <button type="button" className="section-toggle">
-              {activeSections.employment ? <FiChevronUp /> : <FiChevronDown />}
-            </button>
-          </div>
-          
-          {activeSections.employment && (
-            <div className="section-content">
-              <div className="form-fields">
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label">
-                      Employee ID <span className="required">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      className={`form-input ${getFieldError('employee_id') ? 'error' : ''}`}
-                      value={formData.employee_id}
-                      onChange={(e) => handleInputChange('employee_id', e.target.value.toUpperCase())}
-                      onBlur={() => handleBlur('employee_id')}
-                      placeholder="e.g., EMP001"
-                      disabled // Usually employee ID shouldn't be edited
-                    />
-                    {getFieldError('employee_id') && (
-                      <span className="error-message">{getFieldError('employee_id')}</span>
-                    )}
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">
-                      Job Title <span className="required">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      className={`form-input ${getFieldError('job_title') ? 'error' : ''}`}
-                      value={formData.job_title}
-                      onChange={(e) => handleInputChange('job_title', e.target.value)}
-                      onBlur={() => handleBlur('job_title')}
-                      placeholder="e.g., Software Engineer"
-                    />
-                    {getFieldError('job_title') && (
-                      <span className="error-message">{getFieldError('job_title')}</span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label">
-                      Department <span className="required">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      className={`form-input ${getFieldError('department') ? 'error' : ''}`}
-                      value={formData.department}
-                      onChange={(e) => handleInputChange('department', e.target.value)}
-                      onBlur={() => handleBlur('department')}
-                      placeholder="e.g., Engineering"
-                    />
-                    {getFieldError('department') && (
-                      <span className="error-message">{getFieldError('department')}</span>
-                    )}
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">
-                      Location <span className="required">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      className={`form-input ${getFieldError('location') ? 'error' : ''}`}
-                      value={formData.location}
-                      onChange={(e) => handleInputChange('location', e.target.value)}
-                      onBlur={() => handleBlur('location')}
-                      placeholder="e.g., Addis Ababa"
-                    />
-                    {getFieldError('location') && (
-                      <span className="error-message">{getFieldError('location')}</span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label">
-                      Start Date <span className="required">*</span>
-                    </label>
-                    <input
-                      type="date"
-                      className={`form-input ${getFieldError('employment_start_date') ? 'error' : ''}`}
-                      value={formData.employment_start_date}
-                      onChange={(e) => handleInputChange('employment_start_date', e.target.value)}
-                      onBlur={() => handleBlur('employment_start_date')}
-                    />
-                    {getFieldError('employment_start_date') && (
-                      <span className="error-message">{getFieldError('employment_start_date')}</span>
-                    )}
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Status</label>
-                    <select
-                      className="form-select"
-                      value={formData.status}
-                      onChange={(e) => handleInputChange('status', e.target.value)}
-                    >
-                      {statusOptions.map(option => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Section 4: Medical Allowance */}
-        <div className={`form-section ${activeSections.medical ? 'active' : ''}`}>
-          <div className="section-header" onClick={() => toggleSection('medical')}>
-            <div className="section-title">
-              <div className="section-icon">
-                <FiHeart />
-              </div>
-              <div>
-                <h2>Medical Allowance</h2>
-                <p className="section-subtitle">Annual medical benefits and usage</p>
-              </div>
-            </div>
-            <button type="button" className="section-toggle">
-              {activeSections.medical ? <FiChevronUp /> : <FiChevronDown />}
-            </button>
-          </div>
-          
-          {activeSections.medical && (
-            <div className="section-content">
-              <div className="form-fields">
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label">Max Limit (ETB)</label>
-                    <input
-                      type="number"
-                      className="form-input"
-                      value={formData.medical_max_limit}
-                      onChange={(e) => handleInputChange('medical_max_limit', parseInt(e.target.value) || 0)}
-                      min="0"
-                      step="1000"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Used Amount (ETB)</label>
-                    <input
-                      type="number"
-                      className="form-input"
-                      value={formData.medical_used}
-                      onChange={(e) => handleInputChange('medical_used', parseInt(e.target.value) || 0)}
-                      min="0"
-                      step="100"
-                    />
-                  </div>
-                </div>
-
-                {formData.medical_used > 0 && (
-                  <div className="allowance-visualization">
-                    <div className="allowance-header">
-                      <span className="allowance-label">Current Usage</span>
-                      <span className="allowance-percentage">
-                        {((formData.medical_used / formData.medical_max_limit) * 100).toFixed(1)}%
-                      </span>
-                    </div>
-                    <div className="progress-track">
-                      <div 
-                        className={`progress-fill ${
-                          (formData.medical_used / formData.medical_max_limit) > 0.9 
-                            ? 'danger' 
-                            : (formData.medical_used / formData.medical_max_limit) > 0.7 
-                            ? 'warning' 
-                            : 'success'
-                        }`}
-                        style={{ 
-                          width: `${Math.min((formData.medical_used / formData.medical_max_limit) * 100, 100)}%` 
-                        }}
-                      />
-                    </div>
-                    <div className="allowance-stats">
-                      <div className="stat">
-                        <span className="stat-label">Used</span>
-                        <span className="stat-value">{formData.medical_used.toLocaleString()} ETB</span>
-                      </div>
-                      <div className="stat">
-                        <span className="stat-label">Remaining</span>
-                        <span className="stat-value">{(formData.medical_max_limit - formData.medical_used).toLocaleString()} ETB</span>
-                      </div>
-                      <div className="stat">
-                        <span className="stat-label">Total</span>
-                        <span className="stat-value">{formData.medical_max_limit.toLocaleString()} ETB</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      </form>
     </div>
   );
 };

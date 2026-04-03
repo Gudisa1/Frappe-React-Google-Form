@@ -1,150 +1,10 @@
-// import React, { useState, useEffect } from 'react';
-// import { getEmployees } from '../../api/hrapi';
-// import { useNavigate } from 'react-router-dom';
-// import './HRDashboard.css';
-
-// const HRDashboard = () => {
-//   const [employees, setEmployees] = useState([]);
-//   const [search, setSearch] = useState('');
-//   const [statusFilter, setStatusFilter] = useState('');
-//   const [projectFilter, setProjectFilter] = useState('');
-//   const [projects, setProjects] = useState([]);
-//   const navigate = useNavigate();
-
-//   // Fetch employees
-//   useEffect(() => {
-//     const fetchEmployees = async () => {
-//       try {
-//         const response = await getEmployees();
-//         setEmployees(response);
-
-//         // Extract unique projects for filtering
-//         const uniqueProjects = Array.from(new Set(response.map(emp => emp.project).filter(Boolean)));
-//         setProjects(uniqueProjects);
-//       } catch (error) {
-//         console.error('Error fetching employees:', error);
-//       }
-//     };
-//     fetchEmployees();
-//   }, []);
-
-//   // Filter employees
-//   const filteredEmployees = (employees || []).filter(emp => {
-//     const fullName = emp.full_name || `${emp.first_name} ${emp.last_name}`;
-//     const matchesSearch =
-//       fullName.toLowerCase().includes(search.toLowerCase()) ||
-//       emp.job_title.toLowerCase().includes(search.toLowerCase()) ||
-//       emp.employee_id.toLowerCase().includes(search.toLowerCase()) ||
-//       (emp.project && emp.project.toLowerCase().includes(search.toLowerCase()));
-
-//     const matchesStatus = statusFilter ? emp.status === statusFilter : true;
-//     const matchesProject = projectFilter ? emp.project === projectFilter : true;
-
-//     return matchesSearch && matchesStatus && matchesProject;
-//   });
-
-//   const handleView = (employee) => {
-//     navigate(`/hr/employee/${employee.employee_id}`);
-//   };
-//   const handleEdit = (employee) => console.log('Edit employee:', employee);
-//   const handleDelete = (employeeId) => console.log('Delete employee with ID:', employeeId);
-
-//   // Status options
-//   const statusOptions = [
-//     "Newly Hired",
-//     "Active",
-//     "Probation",
-//     "Contract Ended",
-//     "Resigned",
-//     "Retired"
-//   ];
-
-//   return (
-//     <div>
-//       <h2>HR Dashboard</h2>
-
-//       {/* Search Input */}
-//       <input
-//         type="text"
-//         placeholder="Search by name, job title, ID, or project..."
-//         value={search}
-//         onChange={(e) => setSearch(e.target.value)}
-//         style={{ marginBottom: '10px', padding: '5px', width: '300px' }}
-//       />
-
-//       {/* Filters */}
-//       <select
-//         value={statusFilter}
-//         onChange={(e) => setStatusFilter(e.target.value)}
-//         style={{ marginLeft: '10px', padding: '5px' }}
-//       >
-//         <option value="">All Statuses</option>
-//         {statusOptions.map(status => (
-//           <option key={status} value={status}>{status}</option>
-//         ))}
-//       </select>
-
-//       <select
-//         value={projectFilter}
-//         onChange={(e) => setProjectFilter(e.target.value)}
-//         style={{ marginLeft: '10px', padding: '5px' }}
-//       >
-//         <option value="">All Projects</option>
-//         {projects.map(proj => (
-//           <option key={proj} value={proj}>{proj}</option>
-//         ))}
-//       </select>
-
-//       {/* Employee Table */}
-//       <table border="1" cellPadding="5" cellSpacing="0" style={{ marginTop: '10px' }}>
-//         <thead>
-//           <tr>
-//             <th>ID</th>
-//             <th>Full Name</th>
-//             <th>Job Title</th>
-//             <th>Project</th>
-//             <th>Email</th>
-//             <th>Phone</th>
-//             <th>Status</th>
-//             <th>Actions</th>
-//           </tr>
-//         </thead>
-//         <tbody>
-//           {filteredEmployees.length > 0 ? filteredEmployees.map(emp => (
-//             <tr key={emp.employee_id}>
-//               <td>{emp.employee_id}</td>
-//               <td>{emp.full_name || `${emp.first_name} ${emp.last_name}`}</td>
-//               <td>{emp.job_title}</td>
-//               <td>{emp.project || '-'}</td>
-//               <td>{emp.email}</td>
-//               <td>{emp.phone}</td>
-//               <td>{emp.status}</td>
-//               <td>
-//                 <button onClick={() => handleView(emp)}>See Details</button>
-//                 <button onClick={() => handleEdit(emp)}>Edit</button>
-//                 <button onClick={() => handleDelete(emp.employee_id)}>Delete</button>
-//               </td>
-//             </tr>
-//           )) : (
-//             <tr>
-//               <td colSpan="8">No employees found.</td>
-//             </tr>
-//           )}
-//         </tbody>
-//       </table>
-//     </div>
-//   );
-// };
-
-// export default HRDashboard;
-
 
 import React, { useState, useEffect } from 'react';
 import { getEmployees } from '../../api/hrapi';
 import { useNavigate } from 'react-router-dom';
-import './HRDashboard.css';
+import './DirectorEmployee.css';
 
-const HRDashboard = () => {
+const DirectorEmployee = () => {
   const [employees, setEmployees] = useState([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -185,12 +45,15 @@ const HRDashboard = () => {
   });
 
   const handleView = (employee) => {
-    navigate(`/hr/employee/${employee.employee_id}`);
+    navigate(`/director-employee/${employee.employee_id}`);
+      navigate(`/director-employee/${employee.employee_id}`, { replace: false });
+
+    // navigate(`/director-employee/${id}`);
   };
-  const handleEdit =  (employee) => {
-    navigate(`/hr/employeeedit/${employee.employee_id}`);
-  };
-  const handleDelete = (employeeId) => console.log('Delete employee with ID:', employeeId);
+  // const handleEdit =  (employee) => {
+  //   navigate(`/hr/employeeedit/${employee.employee_id}`);
+  // };
+  // const handleDelete = (employeeId) => console.log('Delete employee with ID:', employeeId);
 
   // Status options
   const statusOptions = [
@@ -314,7 +177,7 @@ const HRDashboard = () => {
                     </svg>
                     View
                   </button>
-                  <button onClick={() => handleEdit(emp)} className="action-btn edit-btn">
+                  {/* <button onClick={() => handleEdit(emp)} className="action-btn edit-btn">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M17 3L21 7L7 21H3V17L17 3Z" />
                     </svg>
@@ -325,7 +188,7 @@ const HRDashboard = () => {
                       <path d="M18 6L6 18M6 6l12 12" />
                     </svg>
                     Delete
-                  </button>
+                  </button> */}
                 </td>
               </tr>
             )) : (
@@ -347,4 +210,4 @@ const HRDashboard = () => {
   );
 };
 
-export default HRDashboard;
+export default DirectorEmployee;

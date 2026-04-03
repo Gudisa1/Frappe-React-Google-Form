@@ -1,16 +1,31 @@
-export const createEmployee = async (data) => {
-  const res = await fetch('/api/resource/Employee', {
-    method: 'POST',
-    body: JSON.stringify(data),
-    headers: { 'Content-Type': 'application/json' }
-  });
+// hrapi.js
 
-  if (!res.ok) {
-    const error = await res.json();
-    throw new Error(error.message || 'Failed to create employee');
+
+
+export const createEmployee = async (employeeData) => {
+  try {
+    const response = await fetch('/api/resource/Employee', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // Uncomment if you need authentication
+        // 'Authorization': 'token YOUR_API_KEY:YOUR_API_SECRET',
+      },
+      body: JSON.stringify(employeeData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to create employee');
+    }
+
+    const data = await response.json();
+    return data;
+
+  } catch (error) {
+    console.error('Error creating employee:', error);
+    throw error;
   }
-
-  return await res.json(); // <--- Return the response
 };
 
 export const getEmployees = async () => {
@@ -61,28 +76,29 @@ export const getEmployee = async (employeeId) => {
   }
 };
 
-export const updateEmployee = async (employeeId, data) => {
+// api/hrapi.js
+export async function updateEmployee(employeeId, payload) {
   try {
-    const res = await fetch(`/api/resource/Employee/${employeeId}`, {
-      method: 'PUT',   // IMPORTANT: PUT for update
+    const response = await fetch(`/api/resource/Employee/${employeeId}`, {
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(data)
+      credentials: 'include',
+      body: JSON.stringify(payload)
     });
 
-    if (!res.ok) {
-      const error = await res.json().catch(() => ({}));
-      throw new Error(error.message || `Failed to update employee ${employeeId}`);
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData?.message || 'Failed to update employee');
     }
 
-    const result = await res.json();
-    return result.data; // updated employee object
-  } catch (err) {
-    console.error('updateEmployee error:', err);
-    throw err;
+    const data = await response.json();
+    return data.data;
+  } catch (error) {
+    throw error;
   }
-};
+}
 
 // api/hrapi.js - Add this function
 

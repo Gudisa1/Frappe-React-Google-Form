@@ -1,643 +1,10 @@
-// import React, { useEffect, useState, useMemo } from "react";
-// import { getAssets, deleteAsset, getProjects } from "../../api/hrapi"; // Make sure getProjects is exported
-// import { useNavigate } from "react-router-dom";
-// import "./AssetList.css";
-
-// const AssetList = () => {
-//   const [assets, setAssets] = useState([]);
-//   const [projects, setProjects] = useState([]);
-//   const [loading, setLoading] = useState(false);
-//   const [searchTerm, setSearchTerm] = useState("");
-  
-//   // Advanced filters
-//   const [filters, setFilters] = useState({
-//     condition: "all",
-//     project: "all",
-//     assetType: "all",
-//     dateRange: "all",
-//     status: "all"
-//   });
-  
-//   const [showDeleteModal, setShowDeleteModal] = useState(false);
-//   const [assetToDelete, setAssetToDelete] = useState(null);
-//   const [showFilters, setShowFilters] = useState(false);
-//   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
-  
-//   const navigate = useNavigate();
-
-//   // Fetch assets and projects
-//   const fetchData = async () => {
-//     setLoading(true);
-//     try {
-//       const [assetsData, projectsData] = await Promise.all([
-//         getAssets(),
-//         getProjects()
-//       ]);
-//       setAssets(assetsData);
-//       setProjects(projectsData || []);
-//       console.log("Fetched assets:", assetsData);
-//     } catch (error) {
-//       console.error("Failed to fetch data", error);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   useEffect(() => {
-//     fetchData();
-//   }, []);
-
-//   // Get unique values for filters
-//   const assetTypes = useMemo(() => 
-//     ["all", ...new Set(assets.map(a => a.asset_type).filter(Boolean))],
-//     [assets]
-//   );
-
-//   const conditions = useMemo(() => 
-//     ["all", ...new Set(assets.map(a => a.condition).filter(Boolean))],
-//     [assets]
-//   );
-
-//   // Advanced filtering
-//   const filteredAssets = useMemo(() => {
-//     return assets.filter(asset => {
-//       // Search filter - now searching through ALL fields
-//       const searchLower = searchTerm.toLowerCase();
-//       const matchesSearch = searchTerm === "" || 
-//         // Search through all relevant fields
-//         Object.values({
-//           asset_name: asset.asset_name,
-//           asset_id: asset.asset_id,
-//           asset_code: asset.asset_code,
-//           project: asset.project,
-//           asset_type: asset.asset_type,
-//           condition: asset.condition,
-//           model: asset.model,
-//           serial_number: asset.serial_number,
-//           notes: asset.notes,
-//           owner: asset.owner
-//         }).some(value => 
-//           value && value.toString().toLowerCase().includes(searchLower)
-//         );
-
-//       // Condition filter
-//       const matchesCondition = filters.condition === "all" || 
-//         asset.condition === filters.condition;
-
-//       // Project filter
-//       const matchesProject = filters.project === "all" || 
-//         asset.project === filters.project;
-
-//       // Asset type filter
-//       const matchesType = filters.assetType === "all" || 
-//         asset.asset_type === filters.assetType;
-
-//       return matchesSearch && matchesCondition && matchesProject && matchesType;
-//     });
-//   }, [assets, searchTerm, filters]);
-
-//   // Sorting function
-//   const sortedAssets = useMemo(() => {
-//     let sortableAssets = [...filteredAssets];
-//     if (sortConfig.key) {
-//       sortableAssets.sort((a, b) => {
-//         const aVal = a[sortConfig.key] || '';
-//         const bVal = b[sortConfig.key] || '';
-        
-//         if (aVal < bVal) {
-//           return sortConfig.direction === 'asc' ? -1 : 1;
-//         }
-//         if (aVal > bVal) {
-//           return sortConfig.direction === 'asc' ? 1 : -1;
-//         }
-//         return 0;
-//       });
-//     }
-//     return sortableAssets;
-//   }, [filteredAssets, sortConfig]);
-
-//   const requestSort = (key) => {
-//     setSortConfig({
-//       key,
-//       direction: sortConfig.key === key && sortConfig.direction === 'asc' ? 'desc' : 'asc'
-//     });
-//   };
-
-//   // Delete handlers
-//   const handleDeleteClick = (asset) => {
-//     setAssetToDelete(asset);
-//     setShowDeleteModal(true);
-//   };
-
-//   const confirmDelete = async () => {
-//     if (!assetToDelete) return;
-    
-//     try {
-//       await deleteAsset(assetToDelete.name);
-//       setShowDeleteModal(false);
-//       setAssetToDelete(null);
-//       fetchData();
-//     } catch (error) {
-//       console.error(error);
-//       alert("Failed to delete asset");
-//     }
-//   };
-
-//   // Navigation handlers
-//   const handleEdit = (name) => {
-//     navigate(`/hr/assetlistedit/${name}`);
-//   };
-
-//   const handleView = (name) => {
-//     navigate(`/hr/assetlist/${encodeURIComponent(name)}`);
-//   };
-
-//   // Statistics with all fields considered
-//   const stats = useMemo(() => ({
-//     total: assets.length,
-//     working: assets.filter(a => a.condition === 'working').length,
-//     repair: assets.filter(a => a.condition === 'repair').length,
-//     damaged: assets.filter(a => a.condition === 'damaged').length,
-//     lost: assets.filter(a => a.condition === 'lost').length,
-//     disposed: assets.filter(a => a.condition === 'disposed').length,
-//     byProject: projects.reduce((acc, project) => {
-//       acc[project] = assets.filter(a => a.project === project).length;
-//       return acc;
-//     }, {}),
-//     byType: assetTypes.slice(1).reduce((acc, type) => {
-//       acc[type] = assets.filter(a => a.asset_type === type).length;
-//       return acc;
-//     }, {}),
-//     totalQuantity: assets.reduce((sum, a) => sum + (a.quantity || 0), 0)
-//   }), [assets, projects, assetTypes]);
-
-//   // Condition badge component
-//   const ConditionBadge = ({ condition }) => {
-//     const getConditionConfig = (cond) => {
-//       const configs = {
-//         working: { color: "#10b981", bg: "rgba(16, 185, 129, 0.15)", icon: "✅", label: "Working" },
-//         repair: { color: "#f59e0b", bg: "rgba(245, 158, 11, 0.15)", icon: "🔧", label: "Under Repair" },
-//         damaged: { color: "#ef4444", bg: "rgba(239, 68, 68, 0.15)", icon: "⚠️", label: "Damaged" },
-//         lost: { color: "#6b7280", bg: "rgba(107, 114, 128, 0.15)", icon: "❓", label: "Lost" },
-//         disposed: { color: "#4b5563", bg: "rgba(75, 85, 99, 0.15)", icon: "🗑️", label: "Disposed" },
-//       };
-//       return configs[cond?.toLowerCase()] || { color: "#64748b", bg: "rgba(100, 116, 139, 0.15)", icon: "📦", label: cond || "Unknown" };
-//     };
-
-//     const config = getConditionConfig(condition);
-
-//     return (
-//       <span className="condition-badge" style={{ backgroundColor: config.bg, color: config.color }}>
-//         <span className="badge-icon">{config.icon}</span>
-//         <span className="badge-text">{config.label}</span>
-//       </span>
-//     );
-//   };
-
-//   return (
-//     <div className="asset-list-container">
-//       {/* Animated background elements */}
-//       <div className="bg-orb bg-orb-1"></div>
-//       <div className="bg-orb bg-orb-2"></div>
-//       <div className="bg-orb bg-orb-3"></div>
-
-//       <div className="content-wrapper">
-//         {/* Header */}
-//         <div className="list-header">
-//           <div className="header-content">
-//             <h1 className="page-title">Asset Management Dashboard</h1>
-//             <p className="page-subtitle">Comprehensive view of all assets across projects</p>
-//           </div>
-//           <button 
-//             className="create-button"
-//             onClick={() => navigate('/hr/asset')}
-//           >
-//             <span className="create-icon">+</span>
-//             Add New Asset
-//           </button>
-//         </div>
-
-//         {/* Enhanced Stats Grid */}
-//         <div className="stats-enhanced">
-//           <div className="stats-row">
-//             <div className="stat-card total">
-//               <div className="stat-icon">📊</div>
-//               <div className="stat-content">
-//                 <span className="stat-label">Total Assets</span>
-//                 <span className="stat-value">{stats.total}</span>
-//               </div>
-//             </div>
-//             <div className="stat-card working">
-//               <div className="stat-icon">✅</div>
-//               <div className="stat-content">
-//                 <span className="stat-label">Working</span>
-//                 <span className="stat-value">{stats.working}</span>
-//               </div>
-//             </div>
-//             <div className="stat-card repair">
-//               <div className="stat-icon">🔧</div>
-//               <div className="stat-content">
-//                 <span className="stat-label">Under Repair</span>
-//                 <span className="stat-value">{stats.repair}</span>
-//               </div>
-//             </div>
-//             <div className="stat-card damaged">
-//               <div className="stat-icon">⚠️</div>
-//               <div className="stat-content">
-//                 <span className="stat-label">Damaged</span>
-//                 <span className="stat-value">{stats.damaged}</span>
-//               </div>
-//             </div>
-//           </div>
-
-//           {/* Additional Stats Row */}
-//           <div className="stats-row secondary">
-//             <div className="stat-card info">
-//               <div className="stat-icon">📦</div>
-//               <div className="stat-content">
-//                 <span className="stat-label">Total Quantity</span>
-//                 <span className="stat-value">{stats.totalQuantity}</span>
-//               </div>
-//             </div>
-//             <div className="stat-card info">
-//               <div className="stat-icon">🏢</div>
-//               <div className="stat-content">
-//                 <span className="stat-label">Active Projects</span>
-//                 <span className="stat-value">{projects.length}</span>
-//               </div>
-//             </div>
-//             <div className="stat-card info">
-//               <div className="stat-icon">🔖</div>
-//               <div className="stat-content">
-//                 <span className="stat-label">Asset Types</span>
-//                 <span className="stat-value">{assetTypes.length - 1}</span>
-//               </div>
-//             </div>
-//             <div className="stat-card info">
-//               <div className="stat-icon">⚠️</div>
-//               <div className="stat-content">
-//                 <span className="stat-label">Needs Attention</span>
-//                 <span className="stat-value">{stats.damaged + stats.repair}</span>
-//               </div>
-//             </div>
-//           </div>
-
-//           {/* Project Distribution */}
-//           <div className="project-distribution">
-//             <h3>Assets by Project</h3>
-//             <div className="project-tags">
-//               {projects.map(project => (
-//                 <button
-//                   key={project}
-//                   className={`project-tag ${filters.project === project ? 'active' : ''}`}
-//                   onClick={() => setFilters(prev => ({ ...prev, project: project === filters.project ? 'all' : project }))}
-//                 >
-//                   {project}
-//                   <span className="project-count">{stats.byProject[project] || 0}</span>
-//                 </button>
-//               ))}
-//             </div>
-//           </div>
-
-//           {/* Asset Type Distribution */}
-//           <div className="type-distribution">
-//             <h3>Assets by Type</h3>
-//             <div className="type-chips">
-//               {assetTypes.slice(1).map(type => (
-//                 <button
-//                   key={type}
-//                   className={`type-chip ${filters.assetType === type ? 'active' : ''}`}
-//                   onClick={() => setFilters(prev => ({ ...prev, assetType: type === filters.assetType ? 'all' : type }))}
-//                 >
-//                   {type}
-//                   <span className="type-count">{stats.byType[type] || 0}</span>
-//                 </button>
-//               ))}
-//             </div>
-//           </div>
-//         </div>
-
-//         {/* Advanced Filters Section */}
-//         <div className="filters-advanced">
-//           <div className="search-box">
-//             <span className="search-icon">🔍</span>
-//             <input
-//               type="text"
-//               placeholder="Search by name, ID, code, project, type, model, serial number, notes, owner..."
-//               value={searchTerm}
-//               onChange={(e) => setSearchTerm(e.target.value)}
-//               className="search-input"
-//             />
-//           </div>
-
-//           <button 
-//             className="toggle-filters-btn"
-//             onClick={() => setShowFilters(!showFilters)}
-//           >
-//             <span className="filter-icon">⚙️</span>
-//             {showFilters ? 'Hide Filters' : 'Show Filters'}
-//           </button>
-
-//           {showFilters && (
-//             <div className="filter-panel">
-//               <div className="filter-row">
-//                 <div className="filter-group">
-//                   <label>Condition</label>
-//                   <select 
-//                     className="filter-select"
-//                     value={filters.condition}
-//                     onChange={(e) => setFilters(prev => ({ ...prev, condition: e.target.value }))}
-//                   >
-//                     {conditions.map(cond => (
-//                       <option key={cond} value={cond}>
-//                         {cond === 'all' ? 'All Conditions' : cond.charAt(0).toUpperCase() + cond.slice(1)}
-//                       </option>
-//                     ))}
-//                   </select>
-//                 </div>
-
-//                 <div className="filter-group">
-//                   <label>Project</label>
-//                   <select 
-//                     className="filter-select"
-//                     value={filters.project}
-//                     onChange={(e) => setFilters(prev => ({ ...prev, project: e.target.value }))}
-//                   >
-//                     <option value="all">All Projects</option>
-//                     {projects.map(project => (
-//                       <option key={project} value={project}>{project}</option>
-//                     ))}
-//                   </select>
-//                 </div>
-
-//                 <div className="filter-group">
-//                   <label>Asset Type</label>
-//                   <select 
-//                     className="filter-select"
-//                     value={filters.assetType}
-//                     onChange={(e) => setFilters(prev => ({ ...prev, assetType: e.target.value }))}
-//                   >
-//                     {assetTypes.map(type => (
-//                       <option key={type} value={type}>
-//                         {type === 'all' ? 'All Types' : type}
-//                       </option>
-//                     ))}
-//                   </select>
-//                 </div>
-//               </div>
-
-//               {(searchTerm || filters.condition !== 'all' || filters.project !== 'all' || filters.assetType !== 'all') && (
-//                 <button 
-//                   className="clear-all-filters"
-//                   onClick={() => {
-//                     setSearchTerm("");
-//                     setFilters({
-//                       condition: "all",
-//                       project: "all",
-//                       assetType: "all",
-//                       dateRange: "all",
-//                       status: "all"
-//                     });
-//                   }}
-//                 >
-//                   Clear All Filters
-//                 </button>
-//               )}
-//             </div>
-//           )}
-//         </div>
-
-//         {/* Results Summary */}
-//         <div className="results-summary">
-//           <span className="results-count">
-//             Showing {sortedAssets.length} of {assets.length} assets
-//           </span>
-//           {sortedAssets.length > 0 && (
-//             <span className="results-sort">
-//               Sort by: 
-//               <button 
-//                 className={`sort-btn ${sortConfig.key === 'asset_name' ? 'active' : ''}`}
-//                 onClick={() => requestSort('asset_name')}
-//               >
-//                 Name {sortConfig.key === 'asset_name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-//               </button>
-//               <button 
-//                 className={`sort-btn ${sortConfig.key === 'project' ? 'active' : ''}`}
-//                 onClick={() => requestSort('project')}
-//               >
-//                 Project {sortConfig.key === 'project' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-//               </button>
-//               <button 
-//                 className={`sort-btn ${sortConfig.key === 'condition' ? 'active' : ''}`}
-//                 onClick={() => requestSort('condition')}
-//               >
-//                 Condition {sortConfig.key === 'condition' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-//               </button>
-//             </span>
-//           )}
-//         </div>
-
-//         {/* Assets Table */}
-//         {loading ? (
-//           <div className="loading-state">
-//             <div className="spinner"></div>
-//             <p>Loading assets...</p>
-//           </div>
-//         ) : (
-//           <div className="table-container">
-//             <table className="assets-table">
-//               <thead>
-//                 <tr>
-//                   <th onClick={() => requestSort('asset_id')} className="sortable">
-//                     Asset ID {sortConfig.key === 'asset_id' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-//                   </th>
-//                   <th onClick={() => requestSort('asset_code')} className="sortable">
-//                     Code {sortConfig.key === 'asset_code' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-//                   </th>
-//                   <th onClick={() => requestSort('asset_name')} className="sortable">
-//                     Name {sortConfig.key === 'asset_name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-//                   </th>
-//                   <th onClick={() => requestSort('project')} className="sortable">
-//                     Project {sortConfig.key === 'project' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-//                   </th>
-//                   <th onClick={() => requestSort('asset_type')} className="sortable">
-//                     Type {sortConfig.key === 'asset_type' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-//                   </th>
-//                   <th onClick={() => requestSort('model')} className="sortable">
-//                     Model {sortConfig.key === 'model' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-//                   </th>
-//                   <th onClick={() => requestSort('serial_number')} className="sortable">
-//                     Serial # {sortConfig.key === 'serial_number' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-//                   </th>
-//                   <th>Quantity</th>
-//                   <th onClick={() => requestSort('condition')} className="sortable">
-//                     Condition {sortConfig.key === 'condition' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-//                   </th>
-//                   <th>Notes</th>
-//                   <th>Actions</th>
-//                 </tr>
-//               </thead>
-//               <tbody>
-//                 {sortedAssets.length > 0 ? (
-//                   sortedAssets.map((a, index) => (
-//                     <tr key={a.name} className="asset-row" style={{ animationDelay: `${index * 0.03}s` }}>
-//                       <td className="asset-id">
-//                         <span className="id-badge">{a.asset_id || '—'}</span>
-//                       </td>
-//                       <td className="asset-code">
-//                         <code>{a.asset_code || '—'}</code>
-//                       </td>
-//                       <td className="asset-name">
-//                         <strong>{a.asset_name || '—'}</strong>
-//                       </td>
-//                       <td className="project-cell">
-//                         <span className="project-badge">{a.project || '—'}</span>
-//                       </td>
-//                       <td className="type-cell">
-//                         <span className="type-badge">{a.asset_type || '—'}</span>
-//                       </td>
-//                       <td className="model-cell">{a.model || '—'}</td>
-//                       <td className="serial-cell">
-//                         <code className="serial-number">{a.serial_number || '—'}</code>
-//                       </td>
-//                       <td className="quantity-cell">
-//                         <span className="quantity-badge">{a.quantity || 0}</span>
-//                       </td>
-//                       <td className="condition-cell">
-//                         <ConditionBadge condition={a.condition} />
-//                       </td>
-//                       <td className="notes-cell" title={a.notes}>
-//                         {a.notes ? (
-//                           <span className="notes-indicator">
-//                             📝 {a.notes.length > 20 ? a.notes.substring(0, 20) + '...' : a.notes}
-//                           </span>
-//                         ) : '—'}
-//                       </td>
-//                       <td className="actions-cell">
-//                         <button 
-//                           className="action-btn view-btn" 
-//                           onClick={() => handleView(a.name)}
-//                           title="View Details"
-//                         >
-//                           👁️
-//                         </button>
-//                         <button 
-//                           className="action-btn edit-btn" 
-//                           onClick={() => handleEdit(a.name)}
-//                           title="Edit Asset"
-//                         >
-//                           ✎
-//                         </button>
-//                         <button 
-//                           className="action-btn delete-btn" 
-//                           onClick={() => handleDeleteClick(a)}
-//                           title="Delete Asset"
-//                         >
-//                           🗑️
-//                         </button>
-//                       </td>
-//                     </tr>
-//                   ))
-//                 ) : (
-//                   <tr>
-//                     <td colSpan="11" className="no-results">
-//                       <div className="no-results-content">
-//                         <span className="no-results-icon">🔍</span>
-//                         <p>No assets found matching your criteria</p>
-//                         <button className="clear-filters-btn" onClick={() => {
-//                           setSearchTerm("");
-//                           setFilters({
-//                             condition: "all",
-//                             project: "all",
-//                             assetType: "all",
-//                             dateRange: "all",
-//                             status: "all"
-//                           });
-//                         }}>
-//                           Clear All Filters
-//                         </button>
-//                       </div>
-//                     </td>
-//                   </tr>
-//                 )}
-//               </tbody>
-//             </table>
-//           </div>
-//         )}
-
-//         {/* Export Options */}
-//         <div className="export-section">
-//           <button className="export-btn">
-//             <span>📥</span> Export Report
-//           </button>
-//           <button className="export-btn">
-//             <span>📊</span> Generate Summary
-//           </button>
-//         </div>
-//       </div>
-
-//       {/* Delete Confirmation Modal */}
-//       {showDeleteModal && (
-//         <div className="modal-overlay">
-//           <div className="modal-content delete-modal">
-//             <div className="modal-header">
-//               <h3>Delete Asset</h3>
-//               <button className="modal-close" onClick={() => setShowDeleteModal(false)}>×</button>
-//             </div>
-//             <div className="modal-body">
-//               <div className="delete-icon">⚠️</div>
-//               <p>Are you sure you want to delete this asset?</p>
-//               {assetToDelete && (
-//                 <div className="asset-preview">
-//                   <div className="preview-item">
-//                     <span className="preview-label">Asset:</span>
-//                     <span className="preview-value">{assetToDelete.asset_name}</span>
-//                   </div>
-//                   <div className="preview-item">
-//                     <span className="preview-label">ID:</span>
-//                     <span className="preview-value">{assetToDelete.asset_id}</span>
-//                   </div>
-//                   <div className="preview-item">
-//                     <span className="preview-label">Project:</span>
-//                     <span className="preview-value">{assetToDelete.project}</span>
-//                   </div>
-//                   <div className="preview-item">
-//                     <span className="preview-label">Type:</span>
-//                     <span className="preview-value">{assetToDelete.asset_type}</span>
-//                   </div>
-//                 </div>
-//               )}
-//               <p className="warning-text">This action cannot be undone.</p>
-//             </div>
-//             <div className="modal-footer">
-//               <button 
-//                 className="btn btn-secondary" 
-//                 onClick={() => setShowDeleteModal(false)}
-//               >
-//                 Cancel
-//               </button>
-//               <button 
-//                 className="btn btn-danger" 
-//                 onClick={confirmDelete}
-//               >
-//                 Delete Asset
-//               </button>
-//             </div>
-//           </div>
-//         </div>
-//       )}
-//     </div>
-//   );
-// };
-
-
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import { getAssets, deleteAsset, getProjects } from "../../api/hrapi";
 import { useNavigate } from "react-router-dom";
 import { exportAssetsToExcel, exportSummaryToExcel } from "../../hooks/xl";
-import "./AssetList.css";
+import "./DirectorAsset.css";
 
-const AssetList = () => {
+const DirectorAsset = () => {
   const [assets, setAssets] = useState([]);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -681,6 +48,151 @@ const AssetList = () => {
       setShowToast(false);
     }, 2000);
   };
+
+  // REMOVE SIDEBAR AND NAVIGATION WHEN THIS COMPONENT MOUNTS
+  useEffect(() => {
+    // Function to hide sidebar and navigation elements
+    const hideSidebarAndNav = () => {
+      // Target all possible sidebar/navigation containers
+      const elementsToHide = [
+        // Sidebar elements
+        '.sidebar',
+        '.side-nav', 
+        '.side-menu',
+        '.navigation-sidebar',
+        '[class*="sidebar"]',
+        '[class*="side-nav"]',
+        '.app-sidebar',
+        '.main-sidebar',
+        '.nav-sidebar',
+        // Navigation elements
+        '.navbar',
+        '.main-nav',
+        '.top-nav',
+        '.navigation-menu',
+        '.header-nav',
+        '[class*="navbar"]',
+        '[class*="navigation"]',
+        '[class*="nav-menu"]',
+        // Dashboard menu items
+        '.dashboard-menu',
+        '.nav-menu-items',
+        '.menu-items',
+      ];
+      
+      // Hide all matching elements
+      elementsToHide.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(el => {
+          if (el && !el.classList?.contains('asset-list-container')) {
+            el.style.display = 'none';
+          }
+        });
+      });
+      
+      // Hide menu items by their text content
+      const menuTexts = ['Dashboard', 'Submissions', 'Project General Stat', 'Togi', 'Compassion', 'PM', 'Logout'];
+      const allElements = document.querySelectorAll('*');
+      allElements.forEach(el => {
+        if (el.textContent && menuTexts.some(text => el.textContent.trim() === text)) {
+          if (el.tagName === 'A' || el.tagName === 'LI' || el.tagName === 'DIV' || 
+              el.closest('nav') || el.closest('.sidebar') || el.closest('.menu')) {
+            el.style.display = 'none';
+          }
+        }
+      });
+      
+      // Adjust main content to take full width
+      const mainContentSelectors = [
+        '.main-content',
+        '.content-wrapper',
+        '[class*="main-content"]',
+        '.page-content',
+        '.app-content',
+        'main'
+      ];
+      
+      for (const selector of mainContentSelectors) {
+        const content = document.querySelector(selector);
+        if (content) {
+          content.style.marginLeft = '0';
+          content.style.paddingLeft = '0';
+          content.style.width = '100%';
+          content.style.maxWidth = '100%';
+          break;
+        }
+      }
+      
+      // Also adjust body and html
+      document.body.style.marginLeft = '0';
+      document.body.style.paddingLeft = '0';
+      document.body.style.overflowX = 'hidden';
+      document.documentElement.style.marginLeft = '0';
+      document.documentElement.style.paddingLeft = '0';
+      
+      // Remove any padding/margin that might be causing layout shift
+      const layoutContainers = document.querySelectorAll('.app, .app-wrapper, .layout, .container');
+      layoutContainers.forEach(container => {
+        container.style.marginLeft = '0';
+        container.style.paddingLeft = '0';
+      });
+    };
+    
+    // Run immediately
+    hideSidebarAndNav();
+    
+    // Also run after a small delay to ensure DOM is fully loaded
+    const timer = setTimeout(hideSidebarAndNav, 100);
+    
+    // Add a mutation observer to handle dynamically loaded content
+    const observer = new MutationObserver(() => {
+      hideSidebarAndNav();
+    });
+    
+    observer.observe(document.body, { childList: true, subtree: true });
+    
+    // Cleanup - restore sidebar when component unmounts
+    return () => {
+      clearTimeout(timer);
+      observer.disconnect();
+      
+      // Restore all hidden elements
+      const elementsToRestore = [
+        '.sidebar', '.side-nav', '.side-menu', '.navigation-sidebar',
+        '.app-sidebar', '.main-sidebar', '.nav-sidebar', '.navbar',
+        '.main-nav', '.top-nav', '.navigation-menu', '.header-nav'
+      ];
+      
+      elementsToRestore.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(el => {
+          el.style.display = '';
+        });
+      });
+      
+      // Restore main content styles
+      const mainContentSelectors = [
+        '.main-content', '.content-wrapper', '.page-content', '.app-content', 'main'
+      ];
+      
+      for (const selector of mainContentSelectors) {
+        const content = document.querySelector(selector);
+        if (content) {
+          content.style.marginLeft = '';
+          content.style.paddingLeft = '';
+          content.style.width = '';
+          content.style.maxWidth = '';
+        }
+      }
+      
+      // Restore body styles
+      document.body.style.marginLeft = '';
+      document.body.style.paddingLeft = '';
+      document.body.style.overflowX = '';
+      document.documentElement.style.marginLeft = '';
+      document.documentElement.style.paddingLeft = '';
+    };
+  }, []);
 
   // Fetch assets and projects
   const fetchData = async () => {
@@ -788,69 +300,41 @@ const AssetList = () => {
     });
   };
 
-  // Selection handlers
+  // Selection handlers - DISABLED for view-only
   const handleSelectAll = () => {
-    if (selectedAssets.length === sortedAssets.length) {
-      setSelectedAssets([]);
-    } else {
-      setSelectedAssets(sortedAssets.map(a => a.name));
-    }
+    showNotification("View only mode - Selection disabled", "error");
+    return;
   };
 
   const handleSelectAsset = (name) => {
-    setSelectedAssets(prev => 
-      prev.includes(name) 
-        ? prev.filter(id => id !== name)
-        : [...prev, name]
-    );
+    showNotification("View only mode - Selection disabled", "error");
+    return;
   };
 
-  // Delete handlers
+  // Delete handlers - DISABLED for view-only
   const handleDeleteClick = (asset) => {
-    setAssetToDelete(asset);
-    setShowDeleteModal(true);
+    showNotification("View only mode - Delete disabled", "error");
+    return;
   };
 
   const confirmDelete = async () => {
-    if (!assetToDelete) return;
-    
-    try {
-      await deleteAsset(assetToDelete.name);
-      setShowDeleteModal(false);
-      setAssetToDelete(null);
-      await fetchData();
-      showNotification(`✅ Deleted ${assetToDelete.asset_name}`, 'success');
-    } catch (error) {
-      console.error(error);
-      showNotification('❌ Failed to delete asset', 'error');
-    }
+    showNotification("View only mode - Delete disabled", "error");
+    return;
   };
 
-  // Bulk delete handler
+  // Bulk delete handler - DISABLED for view-only
   const handleBulkDelete = async () => {
-    if (selectedAssets.length === 0) {
-      showNotification('No assets selected', 'error');
-      return;
-    }
-
-    try {
-      for (const name of selectedAssets) {
-        await deleteAsset(name);
-      }
-      setSelectedAssets([]);
-      await fetchData();
-      showNotification(`✅ Deleted ${selectedAssets.length} assets`, 'success');
-    } catch (error) {
-      console.error(error);
-      showNotification('❌ Failed to delete assets', 'error');
-    }
+    showNotification("View only mode - Bulk delete disabled", "error");
+    return;
   };
 
-  // Navigation handlers
+  // Navigation handlers - DISABLED for view-only (edit)
   const handleEdit = (name) => {
-    navigate(`/hr/assetlistedit/${name}`);
+    showNotification("View only mode - Edit disabled", "error");
+    return;
   };
 
+  // View handler - Only this remains enabled for viewing
   const handleView = (name) => {
     navigate(`/hr/assetlist/${encodeURIComponent(name)}`);
   };
@@ -860,7 +344,7 @@ const AssetList = () => {
     setShowQuickView(true);
   };
 
-  // Project selection handlers
+  // Project selection handlers - ENABLED for export
   const handleProjectSelection = (project) => {
     setSelectedProjects(prev => {
       if (project === 'all') {
@@ -874,7 +358,7 @@ const AssetList = () => {
     });
   };
 
-  // Export selected projects
+  // Export selected projects - ENABLED
   const handleExportSelectedProjects = () => {
     if (selectedProjects.length === 0) {
       showNotification('Please select at least one project', 'error');
@@ -903,7 +387,7 @@ const AssetList = () => {
     }
   };
 
-  // EXPORT HANDLERS
+  // EXPORT HANDLERS - ENABLED
   const handleExportReport = () => {
     if (sortedAssets.length === 0) {
       showNotification('No assets to export', 'error');
@@ -978,7 +462,22 @@ const AssetList = () => {
       <div className="bg-orb bg-orb-2"></div>
       <div className="bg-orb bg-orb-3"></div>
 
-      {/* Toast Notification - Replaces all alerts */}
+      {/* View Only Mode Banner */}
+      <div className="view-only-banner" style={{
+        backgroundColor: '#f0f0f0',
+        color: '#666',
+        textAlign: 'center',
+        padding: '8px',
+        borderRadius: '4px',
+        marginBottom: '16px',
+        fontSize: '14px',
+        border: '1px solid #ddd',
+        margin: '16px'
+      }}>
+        👁️ View Only Mode - You can only view asset information (Create, Edit, Delete disabled) | 📥 Export functionality is available
+      </div>
+
+      {/* Toast Notification */}
       {showToast && (
         <div className={`toast-notification ${toastType}`}>
           {toastMessage}
@@ -1000,9 +499,12 @@ const AssetList = () => {
             >
               🔄
             </button>
+            {/* ADD NEW ASSET BUTTON - DISABLED */}
             <button 
               className="create-button"
-              onClick={() => navigate('/hr/asset')}
+              onClick={() => showNotification("View only mode - Add new asset disabled", "error")}
+              disabled={true}
+              style={{ opacity: 0.5, cursor: 'not-allowed' }}
             >
               <span className="create-icon">+</span>
               Add New Asset
@@ -1010,7 +512,7 @@ const AssetList = () => {
           </div>
         </div>
 
-        {/* Stats Grid */}
+        {/* Stats Grid - Click filters remain enabled for viewing */}
         <div className="stats-enhanced">
           <div className="stats-row">
             <div className="stat-card total" onClick={() => setFilters({ condition: "all", project: "all", assetType: "all" })}>
@@ -1071,7 +573,7 @@ const AssetList = () => {
           </div>
         </div>
 
-        {/* Filters Section */}
+        {/* Filters Section - All filters remain enabled for viewing */}
         <div className="filters-advanced">
           <div className="search-wrapper">
             <div className="search-box">
@@ -1223,23 +725,6 @@ const AssetList = () => {
           )}
         </div>
 
-        {/* Bulk Actions Bar */}
-        {selectedAssets.length > 0 && (
-          <div className="bulk-actions-bar">
-            <div className="bulk-info">
-              <span className="selected-count">{selectedAssets.length}</span> assets selected
-            </div>
-            <div className="bulk-buttons">
-              <button className="bulk-btn delete" onClick={handleBulkDelete}>
-                🗑 Delete Selected
-              </button>
-              <button className="bulk-btn clear" onClick={() => setSelectedAssets([])}>
-                ✕ Clear
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* Results Summary */}
         <div className="results-summary">
           <div className="results-left">
@@ -1254,12 +739,13 @@ const AssetList = () => {
           </div>
           
           <div className="results-right">
-            {/* Selection Controls */}
+            {/* Selection Controls - DISABLED for view-only */}
             {sortedAssets.length > 0 && (
               <div className="selection-controls">
-                <label className="checkbox-label">
+                <label className="checkbox-label" style={{ opacity: 0.5 }}>
                   <input
                     type="checkbox"
+                    disabled={true}
                     checked={selectedAssets.length === sortedAssets.length && sortedAssets.length > 0}
                     onChange={handleSelectAll}
                   />
@@ -1268,7 +754,7 @@ const AssetList = () => {
               </div>
             )}
 
-            {/* Sort Controls */}
+            {/* Sort Controls - Enabled for viewing */}
             {sortedAssets.length > 0 && (
               <div className="results-sort">
                 <span>Sort by:</span>
@@ -1309,6 +795,7 @@ const AssetList = () => {
                   <th className="checkbox-cell">
                     <input
                       type="checkbox"
+                      disabled={true}
                       checked={selectedAssets.length === sortedAssets.length && sortedAssets.length > 0}
                       onChange={handleSelectAll}
                     />
@@ -1348,6 +835,7 @@ const AssetList = () => {
                       <td className="checkbox-cell">
                         <input
                           type="checkbox"
+                          disabled={true}
                           checked={selectedAssets.includes(a.name)}
                           onChange={() => handleSelectAsset(a.name)}
                         />
@@ -1372,17 +860,23 @@ const AssetList = () => {
                         >
                           👁️
                         </button>
+                        {/* EDIT BUTTON - DISABLED */}
                         <button 
                           className="action-btn edit" 
                           onClick={() => handleEdit(a.name)} 
-                          title="Edit"
+                          title="View only mode - Edit disabled"
+                          disabled={true}
+                          style={{ opacity: 0.5, cursor: 'not-allowed' }}
                         >
                           ✎
                         </button>
+                        {/* DELETE BUTTON - DISABLED */}
                         <button 
                           className="action-btn delete" 
                           onClick={() => handleDeleteClick(a)} 
-                          title="Delete"
+                          title="View only mode - Delete disabled"
+                          disabled={true}
+                          style={{ opacity: 0.5, cursor: 'not-allowed' }}
                         >
                           🗑️
                         </button>
@@ -1415,14 +909,14 @@ const AssetList = () => {
           </div>
         )}
 
-        {/* EXPORT SECTION with Project Selector */}
+        {/* EXPORT SECTION - ENABLED */}
         <div className="export-section">
           <div className="export-left">
             <div className="export-info">
               <span>📋 {sortedAssets.length} asset{sortedAssets.length !== 1 ? 's' : ''}</span>
             </div>
             
-            {/* Project Selector */}
+            {/* Project Selector - ENABLED */}
             <div className="project-selector-container">
               <button 
                 className={`project-selector-btn ${showProjectSelector ? 'active' : ''}`}
@@ -1486,9 +980,9 @@ const AssetList = () => {
                     <button 
                       className="project-selector-export"
                       onClick={handleExportSelectedProjects}
-                      disabled={selectedProjects.length === 0}
+                      disabled={selectedProjects.length === 0 || exportLoading}
                     >
-                      Export Selected ({selectedProjects.length})
+                      {exportLoading ? 'Exporting...' : `Export Selected (${selectedProjects.length})`}
                     </button>
                   </div>
                 </div>
@@ -1518,7 +1012,7 @@ const AssetList = () => {
         </div>
       </div>
 
-      {/* Quick View Modal */}
+      {/* Quick View Modal - Remains enabled for viewing */}
       {showQuickView && quickViewAsset && (
         <div className="modal-overlay" onClick={() => setShowQuickView(false)}>
           <div className="quick-view-modal" onClick={e => e.stopPropagation()}>
@@ -1576,49 +1070,12 @@ const AssetList = () => {
               <button className="btn btn-secondary" onClick={() => setShowQuickView(false)}>
                 Close
               </button>
+              {/* Edit button in quick view - DISABLED */}
               <button className="btn btn-primary" onClick={() => {
-                setShowQuickView(false);
-                handleEdit(quickViewAsset.name);
-              }}>
+                showNotification("View only mode - Edit disabled", "error");
+              }} disabled={true} style={{ opacity: 0.5, cursor: 'not-allowed' }}>
                 Edit Asset
               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && (
-        <div className="modal-overlay" onClick={() => setShowDeleteModal(false)}>
-          <div className="modal-content delete-modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Delete Asset</h3>
-              <button className="modal-close" onClick={() => setShowDeleteModal(false)}>×</button>
-            </div>
-            <div className="modal-body">
-              <div className="delete-icon">⚠️</div>
-              <p>Are you sure you want to delete this asset?</p>
-              {assetToDelete && (
-                <div className="asset-preview">
-                  <div className="preview-item">
-                    <span className="preview-label">Asset:</span>
-                    <span className="preview-value">{assetToDelete.asset_name}</span>
-                  </div>
-                  <div className="preview-item">
-                    <span className="preview-label">ID:</span>
-                    <span className="preview-value">{assetToDelete.asset_id}</span>
-                  </div>
-                  <div className="preview-item">
-                    <span className="preview-label">Project:</span>
-                    <span className="preview-value">{assetToDelete.project}</span>
-                  </div>
-                </div>
-              )}
-              <p className="warning-text">This action cannot be undone.</p>
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setShowDeleteModal(false)}>Cancel</button>
-              <button className="btn btn-danger" onClick={confirmDelete}>Delete Asset</button>
             </div>
           </div>
         </div>
@@ -1627,4 +1084,4 @@ const AssetList = () => {
   );
 };
 
-export default AssetList;
+export default DirectorAsset;

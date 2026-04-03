@@ -25,6 +25,12 @@ import {
   FiPlus
 } from 'react-icons/fi';
 import './HRLayout.css';
+import { logoutUser } from "../../api/auth";
+import { 
+ 
+  LogOut, 
+ 
+} from 'lucide-react';
 
 const HRLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -56,8 +62,8 @@ const HRLayout = () => {
       description: 'Overview & metrics'
     },
     { 
-      path: '/hr/employees', 
-      name: 'Employees', 
+      path: '/hr/employee/create', 
+      name: 'Add New Employee', 
       icon: FiUsers,
       description: 'Manage staff records'
     },
@@ -178,10 +184,18 @@ const HRLayout = () => {
                 <FiSettings size={18} />
                 <span>Settings</span>
               </button>
-              <button className="footer-button logout">
-                <FiLogOut size={18} />
-                <span>Logout</span>
-              </button>
+               <div className="logout-container">
+          <button
+            onClick={async () => {
+              await logoutUser();
+              window.location.href = "/";
+            }}
+            className="logout-btn"
+          >
+            <LogOut size={18} />
+            <span>Logout</span>
+          </button>
+        </div>
             </>
           ) : (
             <>
@@ -218,23 +232,9 @@ const HRLayout = () => {
 
           <div className="header-right">
             {/* Search */}
-            <div className="search-wrapper">
-              <FiSearch className="search-icon" size={18} />
-              <input 
-                type="text" 
-                placeholder="Search employees, leaves, claims..." 
-                className="search-input"
-              />
-              <span className="search-shortcut">⌘K</span>
-            </div>
+            
 
-            {/* Quick Actions */}
-            <div className="quick-actions">
-              <button className="quick-action">
-                <FiPlus size={18} />
-                <span>New Employee</span>
-              </button>
-            </div>
+          
 
             {/* Notifications */}
             <div className="notifications">

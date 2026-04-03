@@ -1,552 +1,2811 @@
-// pages/HR/EmployeeDetail.jsx
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import {
-  FiUser,
-  FiPhone,
-  FiMail,
-  FiMapPin,
-  FiBriefcase,
-  FiCalendar,
-  FiHeart,
-  FiShield,
-  FiAlertTriangle,
-  FiEdit2,
-  FiTrash2,
-  FiArrowLeft,
-  FiDownload,
-  FiPrinter,
-  FiMoreVertical,
-  FiCheckCircle,
-  FiXCircle,
-  FiClock,
-  FiAward,
-  FiBookOpen,
-  FiChevronRight,
-  FiFileText,
-  FiGlobe,
-  FiStar,
-  FiTrendingUp,
-  FiDollarSign,
-  FiPieChart
-} from 'react-icons/fi';
-import EmployeeLeaveTab from './EmployeeLeaveTab';
-import EmployeeMedicalTab from './EmployeeMedicalTab';
-import EmployeeGuaranteeTab from './EmployeeGuaranteeTab';
-import EmployeeDisciplinaryTab from './EmployeeDisciplinaryTab';
+// import React, { useEffect, useState } from 'react';
+// import { useParams } from 'react-router-dom';
+// import { getEmployee, updateEmployee } from '../../api/hrapi';
+// import './EmployeeDetail.css';
+
+// const EmployeeDetail = () => {
+//   const { id } = useParams();
+//   const [employee, setEmployee] = useState(null);
+//   const [loading, setLoading] = useState(true);
+//   const [error, setError] = useState(null);
+//   const [modalOpen, setModalOpen] = useState(false);
+//   const [currentChildType, setCurrentChildType] = useState('');
+//   const [editingIndex, setEditingIndex] = useState(null);
+//   const [childForm, setChildForm] = useState({});
+//   const [toast, setToast] = useState(null);
+
+//   // ========== SELECT OPTIONS - EXACTLY AS PER BACKEND ==========
+  
+//   // Leave Details Options
+//   const leaveTypeOptions = [
+//     "Annual Leave",
+//     "Sick Leave", 
+//     "Emergency Leave",
+//     "Maternity Leave",
+//     "Paternity Leave",
+//     "Parental Leave",
+//     "Compassionate Leave",
+//     "Study Leave",
+//     "Sabbatical Leave",
+//     "Unpaid Leave",
+//     "Marriage Leave"
+//   ];
+  
+//   const leaveStatusOptions = ["Pending", "Approved", "Rejected"];
+  
+//   // Guarantees Options
+//   const guaranteeTypeOptions = ["Personal", "Financial", "Loan", "Job"];
+//   const guaranteeStatusOptions = ["Active", "Inactive", "Completed"];
+  
+//   // Disciplinary Records Options
+//   const incidentTypeOptions = [
+//     "Warning",
+//     "Misconduct",
+//     "Policy Violation",
+//     "Harassment",
+//     "Discrimination",
+//     "Theft or Fraud",
+//     "Conflict of Interest",
+//     "Safety Violation",
+//     "Negligence",
+//     "Abuse of Authority",
+//     "Insubordination",
+//     "Breach of Confidentiality",
+//     "Unprofessional Behavior",
+//     "Workplace Violence",
+//     "Data or IT Security Breach"
+//   ];
+  
+//   const severityOptions = ["Minor", "Major", "Critical"];
+//   const incidentStatusOptions = ["Open", "Closed", "Resolved"];
+  
+//   // Performance Records Options
+//   const ratingOptions = ["Average", "Good", "Excellent"];
+  
+//   // Employee Status Options (for main employee)
+//   const employeeStatusOptions = [
+//     "Newly Hired",
+//     "Active",
+//     "Probation",
+//     "Contract Ended",
+//     "Resigned",
+//     "Retired"
+//   ];
+
+//   useEffect(() => {
+//     if (!id) return;
+//     fetchEmployeeData();
+//   }, [id]);
+
+//   const fetchEmployeeData = async () => {
+//     try {
+//       setLoading(true);
+//       const response = await getEmployee(id);
+//       setEmployee(response);
+//       setError(null);
+//     } catch (error) {
+//       console.error('Error fetching employee:', error);
+//       const errorMessage = extractErrorMessage(error);
+//       setError(errorMessage);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   // Extract detailed error message from backend response
+//   const extractErrorMessage = (error) => {
+//     if (error.response) {
+//       const { data, status } = error.response;
+      
+//       if (data) {
+//         // Frappe validation errors often come in this format
+//         if (data.exception) {
+//           return data.exception;
+//         }
+//         if (data.message) {
+//           return data.message;
+//         }
+//         if (data._server_messages) {
+//           try {
+//             const messages = JSON.parse(data._server_messages);
+//             if (messages && messages.length > 0) {
+//               return messages[0];
+//             }
+//           } catch (e) {
+//             return data._server_messages;
+//           }
+//         }
+//         if (data.error) {
+//           return data.error;
+//         }
+//         if (typeof data === 'string') {
+//           return data;
+//         }
+//       }
+      
+//       if (status === 404) return 'Resource not found';
+//       if (status === 403) return 'You do not have permission to perform this action';
+//       if (status === 401) return 'Authentication required. Please log in again.';
+//       if (status === 500) return 'Server error. Please try again later.';
+//     }
+    
+//     if (error.message) {
+//       return error.message;
+//     }
+    
+//     return 'An unexpected error occurred. Please try again.';
+//   };
+
+//   const showToast = (message, type = "success") => {
+//     setToast({ message, type });
+//     setTimeout(() => setToast(null), 5000);
+//   };
+
+//   const handleChildChange = (e) => {
+//     const { name, value } = e.target;
+//     setChildForm(prev => ({ ...prev, [name]: value }));
+//   };
+
+//   const openModal = (type, index = null) => {
+//     setCurrentChildType(type);
+//     setEditingIndex(index);
+    
+//     if (index !== null && employee[type] && employee[type][index]) {
+//       setChildForm({ ...employee[type][index] });
+//     } else {
+//       setChildForm(getEmptyChildForm(type));
+//     }
+//     setModalOpen(true);
+//   };
+
+//   const getEmptyChildForm = (type) => {
+//     switch(type) {
+//       case 'leave_details':
+//         return {
+//           from_date: '',
+//           to_date: '',
+//           leave_type: '',
+//           number_of_days: '',
+//           reason: '',
+//           status: 'Pending'
+//         };
+//       case 'disciplinary_records':
+//         return {
+//           date_of_incident: '',
+//           incident_type: '',
+//           severity: '',
+//           action_taken: '',
+//           remarks: '',
+//           status: 'Open'
+//         };
+//       case 'guarantees':
+//         return {
+//           guaranted_employee: employee?.employee_id || '',
+//           guaranteetype: '',
+//           start_date: '',
+//           end_date: '',
+//           status: 'Active',
+//           remarks: ''
+//         };
+//       case 'medical_details':
+//         return {
+//           medical_year: new Date().getFullYear(),
+//           medical_max_limit: '',
+//           medical_used: 0,
+//           medica_remain: ''
+//         };
+//       case 'performance_records':
+//         return {
+//           period: '',
+//           score: '',
+//           rating: '',
+//           remarks: ''
+//         };
+//       default:
+//         return {};
+//     }
+//   };
+
+//   const validateChildForm = () => {
+//     switch(currentChildType) {
+//       case 'leave_details':
+//         if (!childForm.from_date) return 'From Date is required';
+//         if (!childForm.to_date) return 'To Date is required';
+//         if (!childForm.leave_type) return 'Leave Type is required';
+//         if (!childForm.number_of_days) return 'Number of Days is required';
+//         if (parseFloat(childForm.number_of_days) <= 0) return 'Number of Days must be greater than 0';
+        
+//         if (new Date(childForm.from_date) > new Date(childForm.to_date)) {
+//           return 'From Date cannot be later than To Date';
+//         }
+//         break;
+//       case 'disciplinary_records':
+//         if (!childForm.date_of_incident) return 'Date of Incident is required';
+//         if (!childForm.incident_type) return 'Incident Type is required';
+//         if (!childForm.severity) return 'Severity is required';
+//         if (!severityOptions.includes(childForm.severity)) {
+//           return `Severity must be one of: ${severityOptions.join(', ')}`;
+//         }
+//         if (!incidentStatusOptions.includes(childForm.status)) {
+//           return `Status must be one of: ${incidentStatusOptions.join(', ')}`;
+//         }
+//         break;
+//       case 'guarantees':
+//         if (!childForm.guaranted_employee) return 'Guaranteed Employee is required';
+//         if (!childForm.guaranteetype) return 'Guarantee Type is required';
+//         if (!guaranteeTypeOptions.includes(childForm.guaranteetype)) {
+//           return `Guarantee Type must be one of: ${guaranteeTypeOptions.join(', ')}`;
+//         }
+//         if (!guaranteeStatusOptions.includes(childForm.status)) {
+//           return `Status must be one of: ${guaranteeStatusOptions.join(', ')}`;
+//         }
+        
+//         if (childForm.start_date && childForm.end_date) {
+//           if (new Date(childForm.start_date) > new Date(childForm.end_date)) {
+//             return 'Start Date cannot be later than End Date';
+//           }
+//         }
+//         break;
+//       case 'medical_details':
+//         if (!childForm.medical_year) return 'Medical Year is required';
+//         if (!childForm.medical_max_limit) return 'Medical Max Limit is required';
+//         if (childForm.medical_used && parseFloat(childForm.medical_used) > parseFloat(childForm.medical_max_limit)) {
+//           return 'Medical Used cannot exceed Medical Max Limit';
+//         }
+//         // Auto-calculate medical_remain
+//         if (childForm.medical_max_limit && childForm.medical_used !== undefined) {
+//           childForm.medica_remain = parseFloat(childForm.medical_max_limit) - parseFloat(childForm.medical_used || 0);
+//         }
+//         break;
+//       case 'performance_records':
+//         if (!childForm.period) return 'Period is required';
+//         if (!childForm.score) return 'Score is required';
+//         const score = parseFloat(childForm.score);
+//         if (isNaN(score) || score < 0 || score > 100) {
+//           return 'Score must be between 0 and 100';
+//         }
+//         if (childForm.rating && !ratingOptions.includes(childForm.rating)) {
+//           return `Rating must be one of: ${ratingOptions.join(', ')}`;
+//         }
+//         break;
+//       default:
+//         break;
+//     }
+//     return null;
+//   };
+
+//   const saveChildRecord = async () => {
+//     const validationError = validateChildForm();
+//     if (validationError) {
+//       showToast(validationError, "error");
+//       return;
+//     }
+
+//     const payload = { ...employee };
+    
+//     if (!payload[currentChildType]) {
+//       payload[currentChildType] = [];
+//     }
+
+//     if (editingIndex !== null) {
+//       payload[currentChildType][editingIndex] = { ...childForm };
+//     } else {
+//       payload[currentChildType].push({ ...childForm });
+//     }
+
+//     try {
+//       const updated = await updateEmployee(employee.employee_id, payload);
+//       setEmployee(updated.data || updated);
+//       closeModal();
+//       showToast(`${currentChildType.replace(/_/g, ' ')} saved successfully!`, "success");
+//     } catch (error) {
+//       console.error('Error saving record:', error);
+//       const errorMessage = extractErrorMessage(error);
+//       showToast(`Failed to save record: ${errorMessage}`, "error");
+//     }
+//   };
+
+//   const deleteChildRecord = async (type, index) => {
+//     if (!window.confirm('Are you sure you want to delete this record? This action cannot be undone.')) return;
+    
+//     const payload = { ...employee };
+//     if (payload[type] && payload[type][index]) {
+//       payload[type].splice(index, 1);
+      
+//       try {
+//         const updated = await updateEmployee(employee.employee_id, payload);
+//         setEmployee(updated.data || updated);
+//         showToast(`${type.replace(/_/g, ' ')} deleted successfully!`, "success");
+//       } catch (error) {
+//         console.error('Error deleting record:', error);
+//         const errorMessage = extractErrorMessage(error);
+//         showToast(`Failed to delete record: ${errorMessage}`, "error");
+//       }
+//     }
+//   };
+
+//   const closeModal = () => {
+//     setModalOpen(false);
+//     setCurrentChildType('');
+//     setEditingIndex(null);
+//     setChildForm({});
+//   };
+
+//   const renderChildSection = (records, title, type, columns, dataMapping) => {
+//     const recordsArray = records || [];
+//     const hasRecords = recordsArray.length > 0;
+
+//     return (
+//       <div className="child-section">
+//         <div className="section-header">
+//           <h3>{title}</h3>
+//           <button 
+//             className="btn-create"
+//             onClick={() => openModal(type)}
+//           >
+//             + Create {title}
+//           </button>
+//         </div>
+
+//         {!hasRecords ? (
+//           <div className="empty-state-mini">
+//             <span className="empty-icon-mini">📋</span>
+//             <p>No {title.toLowerCase()} records found</p>
+//             <button 
+//               className="btn-create-mini"
+//               onClick={() => openModal(type)}
+//             >
+//               Create First Record
+//             </button>
+//           </div>
+//         ) : (
+//           <div className="table-responsive">
+//             <table className="child-table">
+//               <thead>
+//                 <tr>
+//                   {columns.map(col => <th key={col}>{col}</th>)}
+//                   <th>Actions</th>
+//                 </tr>
+//               </thead>
+//               <tbody>
+//                 {recordsArray.map((rec, idx) => (
+//                   <tr key={idx}>
+//                     {columns.map(col => {
+//                       const fieldName = dataMapping[col];
+//                       let value = rec[fieldName];
+                      
+//                       if (fieldName === 'medical_max_limit' || fieldName === 'medical_used' || fieldName === 'medica_remain') {
+//                         value = value ? `ETB ${parseFloat(value).toLocaleString()}` : '-';
+//                       }
+//                       else if ((fieldName === 'from_date' || fieldName === 'to_date' || fieldName === 'start_date' || 
+//                                 fieldName === 'end_date' || fieldName === 'date_of_incident' || fieldName === 'period') && value) {
+//                         value = new Date(value).toLocaleDateString();
+//                       }
+//                       else if (fieldName === 'score' && value) {
+//                         value = `${parseFloat(value).toFixed(1)}%`;
+//                       }
+//                       else if (fieldName === 'number_of_days' && value) {
+//                         value = `${parseFloat(value).toFixed(1)} days`;
+//                       }
+                      
+//                       return <td key={col}>{value || '-'}</td>;
+//                     })}
+//                     <td className="action-buttons-cell">
+//                       <button 
+//                         className="btn-edit-mini"
+//                         onClick={() => openModal(type, idx)}
+//                         title="Edit"
+//                       >
+//                         ✏️
+//                       </button>
+//                       <button 
+//                         className="btn-delete-mini"
+//                         onClick={() => deleteChildRecord(type, idx)}
+//                         title="Delete"
+//                       >
+//                         🗑️
+//                       </button>
+//                     </td>
+//                   </tr>
+//                 ))}
+//               </tbody>
+//             </table>
+//           </div>
+//         )}
+//       </div>
+//     );
+//   };
+
+//   if (loading) return (
+//     <div className="loading-container">
+//       <div className="loader"></div>
+//       <p>Loading employee details...</p>
+//     </div>
+//   );
+  
+//   if (error) return (
+//     <div className="error-container">
+//       <span className="error-icon">⚠️</span>
+//       <div className="error-details">
+//         <h3>Error Loading Employee</h3>
+//         <p>{error}</p>
+//         <button onClick={fetchEmployeeData} className="btn-retry">Try Again</button>
+//       </div>
+//     </div>
+//   );
+  
+//   if (!employee) return (
+//     <div className="error-container">
+//       <p>No employee found with ID: {id}</p>
+//     </div>
+//   );
+
+//   return (
+//     <div className="employee-detail-container">
+//       {/* Toast Notification */}
+//       {toast && (
+//         <div className={`toast toast-${toast.type}`}>
+//           <div className="toast-content">
+//             <span className="toast-icon">
+//               {toast.type === 'success' ? '✅' : '❌'}
+//             </span>
+//             <span className="toast-message">{toast.message}</span>
+//           </div>
+//         </div>
+//       )}
+
+//       <div className="detail-wrapper">
+//         {/* Header */}
+//         <div className="detail-header">
+//           <div className="header-left">
+//             <h1>Employee Details</h1>
+//             <p>View and manage employee information</p>
+//           </div>
+//           <div className="employee-status-badge">
+//             <span className={`status-badge-large status-${employee.status?.toLowerCase().replace(/ /g, '-')}`}>
+//               {employee.status}
+//             </span>
+//           </div>
+//         </div>
+
+//         {/* Main Info Grid */}
+//         <div className="info-grid">
+//           {/* Personal Info Card */}
+//           <div className="info-card">
+//             <div className="card-header">
+//               <span className="card-icon">👤</span>
+//               <h3>Personal Information</h3>
+//             </div>
+//             <div className="card-content">
+//               <div className="info-row">
+//                 <span className="info-label">Employee ID:</span>
+//                 <span className="info-value employee-id-badge">{employee.employee_id}</span>
+//               </div>
+//               <div className="info-row">
+//                 <span className="info-label">Full Name:</span>
+//                 <span className="info-value">{employee.first_name} {employee.last_name}</span>
+//               </div>
+//               <div className="info-row">
+//                 <span className="info-label">Date of Birth:</span>
+//                 <span className="info-value">{employee.date_of_birth ? new Date(employee.date_of_birth).toLocaleDateString() : '-'}</span>
+//               </div>
+//               <div className="info-row">
+//                 <span className="info-label">Gender:</span>
+//                 <span className="info-value">{employee.gender || '-'}</span>
+//               </div>
+//               <div className="info-row">
+//                 <span className="info-label">Phone:</span>
+//                 <span className="info-value">{employee.phone || '-'}</span>
+//               </div>
+//               <div className="info-row">
+//                 <span className="info-label">Email:</span>
+//                 <span className="info-value">{employee.email || '-'}</span>
+//               </div>
+//               <div className="info-row">
+//                 <span className="info-label">Address:</span>
+//                 <span className="info-value">{employee.address || '-'}</span>
+//               </div>
+//             </div>
+//           </div>
+
+//           {/* Employment Info Card */}
+//           <div className="info-card">
+//             <div className="card-header">
+//               <span className="card-icon">💼</span>
+//               <h3>Employment Information</h3>
+//             </div>
+//             <div className="card-content">
+//               <div className="info-row">
+//                 <span className="info-label">Job Title:</span>
+//                 <span className="info-value">{employee.job_title || '-'}</span>
+//               </div>
+//               <div className="info-row">
+//                 <span className="info-label">Department:</span>
+//                 <span className="info-value">{employee.department || '-'}</span>
+//               </div>
+//               <div className="info-row">
+//                 <span className="info-label">Location:</span>
+//                 <span className="info-value">{employee.location || '-'}</span>
+//               </div>
+//               <div className="info-row">
+//                 <span className="info-label">Start Date:</span>
+//                 <span className="info-value">{employee.employment_start_date ? new Date(employee.employment_start_date).toLocaleDateString() : '-'}</span>
+//               </div>
+//               <div className="info-row">
+//                 <span className="info-label">End Date:</span>
+//                 <span className="info-value">{employee.employment_end_date ? new Date(employee.employment_end_date).toLocaleDateString() : '-'}</span>
+//               </div>
+//               <div className="info-row">
+//                 <span className="info-label">Project:</span>
+//                 <span className="info-value project-badge">{employee.project || '-'}</span>
+//               </div>
+//             </div>
+//           </div>
+
+//           {/* Emergency Contact Card */}
+//           <div className="info-card">
+//             <div className="card-header">
+//               <span className="card-icon">🚨</span>
+//               <h3>Emergency Contact</h3>
+//             </div>
+//             <div className="card-content">
+//               <div className="info-row">
+//                 <span className="info-label">Contact Name:</span>
+//                 <span className="info-value">{employee.emergency_contact_name || '-'}</span>
+//               </div>
+//               <div className="info-row">
+//                 <span className="info-label">Relationship:</span>
+//                 <span className="info-value">{employee.emergency_contact_relationship || '-'}</span>
+//               </div>
+//               <div className="info-row">
+//                 <span className="info-label">Phone:</span>
+//                 <span className="info-value">{employee.emergency_contact_phone || '-'}</span>
+//               </div>
+//             </div>
+//           </div>
+//         </div>
+
+//         {/* Child Records Sections */}
+//         <div className="child-sections">
+//           {/* Leave Details */}
+//           {renderChildSection(
+//             employee.leave_details,
+//             'Leave Details',
+//             'leave_details',
+//             ['From Date', 'To Date', 'Leave Type', 'Number of Days', 'Reason', 'Status'],
+//             {
+//               'From Date': 'from_date',
+//               'To Date': 'to_date',
+//               'Leave Type': 'leave_type',
+//               'Number of Days': 'number_of_days',
+//               'Reason': 'reason',
+//               'Status': 'status'
+//             }
+//           )}
+
+//           {/* Disciplinary Records */}
+//           {renderChildSection(
+//             employee.disciplinary_records,
+//             'Disciplinary Records',
+//             'disciplinary_records',
+//             ['Date of Incident', 'Incident Type', 'Severity', 'Action Taken', 'Remarks', 'Status'],
+//             {
+//               'Date of Incident': 'date_of_incident',
+//               'Incident Type': 'incident_type',
+//               'Severity': 'severity',
+//               'Action Taken': 'action_taken',
+//               'Remarks': 'remarks',
+//               'Status': 'status'
+//             }
+//           )}
+
+//           {/* Guarantees */}
+//           {renderChildSection(
+//             employee.guarantees,
+//             'Guarantees',
+//             'guarantees',
+//             ['Guaranteed Employee', 'Guarantee Type', 'Start Date', 'End Date', 'Status', 'Remarks'],
+//             {
+//               'Guaranteed Employee': 'guaranted_employee',
+//               'Guarantee Type': 'guaranteetype',
+//               'Start Date': 'start_date',
+//               'End Date': 'end_date',
+//               'Status': 'status',
+//               'Remarks': 'remarks'
+//             }
+//           )}
+
+//           {/* Medical Details */}
+//           {renderChildSection(
+//             employee.medical_details,
+//             'Medical Details',
+//             'medical_details',
+//             ['Medical Year', 'Medical Max Limit', 'Medical Used', 'Medical Remain'],
+//             {
+//               'Medical Year': 'medical_year',
+//               'Medical Max Limit': 'medical_max_limit',
+//               'Medical Used': 'medical_used',
+//               'Medical Remain': 'medica_remain'
+//             }
+//           )}
+
+//           {/* Performance Records */}
+//           {renderChildSection(
+//             employee.performance_records,
+//             'Performance Records',
+//             'performance_records',
+//             ['Period', 'Score', 'Rating', 'Remarks'],
+//             {
+//               'Period': 'period',
+//               'Score': 'score',
+//               'Rating': 'rating',
+//               'Remarks': 'remarks'
+//             }
+//           )}
+//         </div>
+
+//         {/* Modal for Create/Edit */}
+//         {modalOpen && (
+//           <div className="modal-overlay" onClick={closeModal}>
+//             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+//               <div className="modal-header">
+//                 <h3>{editingIndex !== null ? 'Edit' : 'Create'} {currentChildType.replace(/_/g, ' ')}</h3>
+//                 <button className="modal-close" onClick={closeModal}>✕</button>
+//               </div>
+//               <div className="modal-body">
+//                 {/* Leave Details Form */}
+//                 {currentChildType === 'leave_details' && (
+//                   <div className="form-group">
+//                     <label>From Date *</label>
+//                     <input type="date" name="from_date" value={childForm.from_date || ''} onChange={handleChildChange} />
+                    
+//                     <label>To Date *</label>
+//                     <input type="date" name="to_date" value={childForm.to_date || ''} onChange={handleChildChange} />
+                    
+//                     <label>Leave Type *</label>
+//                     <select name="leave_type" value={childForm.leave_type || ''} onChange={handleChildChange}>
+//                       <option value="">Select Leave Type</option>
+//                       {leaveTypeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+//                     </select>
+                    
+//                     <label>Number of Days *</label>
+//                     <input type="number" step="0.5" name="number_of_days" value={childForm.number_of_days || ''} onChange={handleChildChange} />
+                    
+//                     <label>Reason</label>
+//                     <textarea name="reason" rows="3" value={childForm.reason || ''} onChange={handleChildChange} placeholder="Reason for leave"></textarea>
+                    
+//                     <label>Status</label>
+//                     <select name="status" value={childForm.status || ''} onChange={handleChildChange}>
+//                       {leaveStatusOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+//                     </select>
+//                   </div>
+//                 )}
+
+//                 {/* Disciplinary Records Form */}
+//                 {currentChildType === 'disciplinary_records' && (
+//                   <div className="form-group">
+//                     <label>Date of Incident *</label>
+//                     <input type="date" name="date_of_incident" value={childForm.date_of_incident || ''} onChange={handleChildChange} />
+                    
+//                     <label>Incident Type *</label>
+//                     <select name="incident_type" value={childForm.incident_type || ''} onChange={handleChildChange}>
+//                       <option value="">Select Incident Type</option>
+//                       {incidentTypeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+//                     </select>
+                    
+//                     <label>Severity *</label>
+//                     <select name="severity" value={childForm.severity || ''} onChange={handleChildChange}>
+//                       <option value="">Select Severity</option>
+//                       {severityOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+//                     </select>
+                    
+//                     <label>Action Taken</label>
+//                     <textarea name="action_taken" rows="3" value={childForm.action_taken || ''} onChange={handleChildChange} placeholder="Action taken against employee"></textarea>
+                    
+//                     <label>Remarks</label>
+//                     <textarea name="remarks" rows="3" value={childForm.remarks || ''} onChange={handleChildChange} placeholder="Additional remarks"></textarea>
+                    
+//                     <label>Status</label>
+//                     <select name="status" value={childForm.status || ''} onChange={handleChildChange}>
+//                       {incidentStatusOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+//                     </select>
+//                   </div>
+//                 )}
+
+//                 {/* Guarantees Form */}
+//                 {currentChildType === 'guarantees' && (
+//                   <div className="form-group">
+//                     <label>Guaranteed Employee *</label>
+//                     <input 
+//                       type="text" 
+//                       name="guaranted_employee" 
+//                       placeholder="Employee ID or Name" 
+//                       value={childForm.guaranted_employee || ''} 
+//                       onChange={handleChildChange}
+//                       readOnly={!editingIndex && childForm.guaranted_employee === employee?.employee_id}
+//                       className={!editingIndex && childForm.guaranted_employee === employee?.employee_id ? 'disabled-input' : ''}
+//                     />
+//                     {!editingIndex && childForm.guaranted_employee === employee?.employee_id && (
+//                       <small className="field-hint">Auto-populated with current employee ID</small>
+//                     )}
+                    
+//                     <label>Guarantee Type *</label>
+//                     <select name="guaranteetype" value={childForm.guaranteetype || ''} onChange={handleChildChange}>
+//                       <option value="">Select Guarantee Type</option>
+//                       {guaranteeTypeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+//                     </select>
+                    
+//                     <label>Start Date</label>
+//                     <input type="date" name="start_date" value={childForm.start_date || ''} onChange={handleChildChange} />
+                    
+//                     <label>End Date</label>
+//                     <input type="date" name="end_date" value={childForm.end_date || ''} onChange={handleChildChange} />
+                    
+//                     <label>Status</label>
+//                     <select name="status" value={childForm.status || ''} onChange={handleChildChange}>
+//                       {guaranteeStatusOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+//                     </select>
+                    
+//                     <label>Remarks</label>
+//                     <textarea name="remarks" rows="3" value={childForm.remarks || ''} onChange={handleChildChange} placeholder="Additional remarks"></textarea>
+//                   </div>
+//                 )}
+
+//                 {/* Medical Details Form */}
+//                 {currentChildType === 'medical_details' && (
+//                   <div className="form-group">
+//                     <label>Medical Year *</label>
+//                     <input type="number" name="medical_year" value={childForm.medical_year || ''} onChange={handleChildChange} />
+                    
+//                     <label>Medical Max Limit (ETB) *</label>
+//                     <input type="number" step="0.01" name="medical_max_limit" value={childForm.medical_max_limit || ''} onChange={handleChildChange} />
+                    
+//                     <label>Medical Used (ETB)</label>
+//                     <input type="number" step="0.01" name="medical_used" value={childForm.medical_used || 0} onChange={handleChildChange} />
+                    
+//                     <label>Medical Remain (ETB) - Auto-calculated</label>
+//                     <input type="number" step="0.01" name="medica_remain" value={
+//                       childForm.medica_remain || 
+//                       (childForm.medical_max_limit && childForm.medical_used !== undefined ? 
+//                         parseFloat(childForm.medical_max_limit) - parseFloat(childForm.medical_used || 0) : '')
+//                     } readOnly disabled className="disabled-input" />
+//                     <small className="field-hint">Automatically calculated as Max Limit - Used</small>
+//                   </div>
+//                 )}
+
+//                 {/* Performance Records Form */}
+//                 {currentChildType === 'performance_records' && (
+//                   <div className="form-group">
+//                     <label>Period *</label>
+//                     <input type="date" name="period" value={childForm.period || ''} onChange={handleChildChange} />
+                    
+//                     <label>Score * (0-100)</label>
+//                     <input type="number" step="0.1" min="0" max="100" name="score" value={childForm.score || ''} onChange={handleChildChange} />
+                    
+//                     <label>Rating</label>
+//                     <select name="rating" value={childForm.rating || ''} onChange={handleChildChange}>
+//                       <option value="">Select Rating</option>
+//                       {ratingOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+//                     </select>
+                    
+//                     <label>Remarks</label>
+//                     <textarea name="remarks" rows="3" value={childForm.remarks || ''} onChange={handleChildChange} placeholder="Performance remarks"></textarea>
+//                   </div>
+//                 )}
+//               </div>
+//               <div className="modal-footer">
+//                 <button className="btn-cancel" onClick={closeModal}>Cancel</button>
+//                 <button className="btn-save" onClick={saveChildRecord}>Save</button>
+//               </div>
+//             </div>
+//           </div>
+//         )}
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default EmployeeDetail;
+
+// import React, { useEffect, useState } from 'react';
+// import { useParams } from 'react-router-dom';
+// import { getEmployee, updateEmployee } from '../../api/hrapi';
+// import './EmployeeDetail.css';
+
+// const EmployeeDetail = () => {
+//   const { id } = useParams();
+//   const [employee, setEmployee] = useState(null);
+//   const [loading, setLoading] = useState(true);
+//   const [error, setError] = useState(null);
+//   const [modalOpen, setModalOpen] = useState(false);
+//   const [currentChildType, setCurrentChildType] = useState('');
+//   const [editingIndex, setEditingIndex] = useState(null);
+//   const [childForm, setChildForm] = useState({});
+//   const [toast, setToast] = useState(null);
+
+//   // ========== SELECT OPTIONS - EXACTLY AS PER BACKEND ==========
+  
+//   // Leave Details Options
+//   const leaveTypeOptions = [
+//     "Annual Leave",
+//     "Sick Leave", 
+//     "Emergency Leave",
+//     "Maternity Leave",
+//     "Paternity Leave",
+//     "Parental Leave",
+//     "Compassionate Leave",
+//     "Study Leave",
+//     "Sabbatical Leave",
+//     "Unpaid Leave",
+//     "Marriage Leave"
+//   ];
+  
+//   const leaveStatusOptions = ["Pending", "Approved", "Rejected"];
+  
+//   // Guarantees Options
+//   const guaranteeTypeOptions = ["Personal", "Financial", "Loan", "Job"];
+//   const guaranteeStatusOptions = ["Active", "Inactive", "Completed"];
+  
+//   // Disciplinary Records Options
+//   const incidentTypeOptions = [
+//     "Warning",
+//     "Misconduct",
+//     "Policy Violation",
+//     "Harassment",
+//     "Discrimination",
+//     "Theft or Fraud",
+//     "Conflict of Interest",
+//     "Safety Violation",
+//     "Negligence",
+//     "Abuse of Authority",
+//     "Insubordination",
+//     "Breach of Confidentiality",
+//     "Unprofessional Behavior",
+//     "Workplace Violence",
+//     "Data or IT Security Breach"
+//   ];
+  
+//   const severityOptions = ["Minor", "Major", "Critical"];
+//   const incidentStatusOptions = ["Open", "Closed", "Resolved"];
+  
+//   // Performance Records Options
+//   const ratingOptions = ["Average", "Good", "Excellent"];
+  
+//   // Employee Status Options (for main employee)
+//   const employeeStatusOptions = [
+//     "Newly Hired",
+//     "Active",
+//     "Probation",
+//     "Contract Ended",
+//     "Resigned",
+//     "Retired"
+//   ];
+
+//   useEffect(() => {
+//     if (!id) return;
+//     fetchEmployeeData();
+//   }, [id]);
+
+//   const fetchEmployeeData = async () => {
+//     try {
+//       setLoading(true);
+//       const response = await getEmployee(id);
+      
+//       // Ensure numeric fields are properly typed in medical_details
+//       if (response.medical_details && Array.isArray(response.medical_details)) {
+//         response.medical_details = response.medical_details.map(detail => ({
+//           ...detail,
+//           medical_year: detail.medical_year ? parseInt(detail.medical_year) : new Date().getFullYear(),
+//           medical_max_limit: detail.medical_max_limit ? parseFloat(detail.medical_max_limit) : 30000,
+//           medical_used: detail.medical_used ? parseFloat(detail.medical_used) : 0,
+//           medica_remain: detail.medica_remain ? parseFloat(detail.medica_remain) : 
+//             (detail.medical_max_limit ? parseFloat(detail.medical_max_limit) - (parseFloat(detail.medical_used) || 0) : 30000)
+//         }));
+//       }
+      
+//       setEmployee(response);
+//       setError(null);
+//     } catch (error) {
+//       console.error('Error fetching employee:', error);
+//       const errorMessage = extractErrorMessage(error);
+//       setError(errorMessage);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   // Extract detailed error message from backend response
+//   const extractErrorMessage = (error) => {
+//     if (error.response) {
+//       const { data, status } = error.response;
+      
+//       if (data) {
+//         if (data.exception) {
+//           return data.exception;
+//         }
+//         if (data.message) {
+//           return data.message;
+//         }
+//         if (data._server_messages) {
+//           try {
+//             const messages = JSON.parse(data._server_messages);
+//             if (messages && messages.length > 0) {
+//               return messages[0];
+//             }
+//           } catch (e) {
+//             return data._server_messages;
+//           }
+//         }
+//         if (data.error) {
+//           return data.error;
+//         }
+//         if (typeof data === 'string') {
+//           return data;
+//         }
+//       }
+      
+//       if (status === 404) return 'Resource not found';
+//       if (status === 403) return 'You do not have permission to perform this action';
+//       if (status === 401) return 'Authentication required. Please log in again.';
+//       if (status === 500) return 'Server error. Please try again later.';
+//     }
+    
+//     if (error.message) {
+//       return error.message;
+//     }
+    
+//     return 'An unexpected error occurred. Please try again.';
+//   };
+
+//   const showToast = (message, type = "success") => {
+//     setToast({ message, type });
+//     setTimeout(() => setToast(null), 5000);
+//   };
+
+//   const handleChildChange = (e) => {
+//     const { name, value } = e.target;
+    
+//     // Handle numeric fields conversion
+//     let processedValue = value;
+//     if (name === 'medical_year' || name === 'number_of_days' || name === 'score') {
+//       processedValue = value === '' ? '' : parseFloat(value);
+//     } else if (name === 'medical_max_limit' || name === 'medical_used') {
+//       processedValue = value === '' ? '' : parseFloat(value);
+//     }
+    
+//     setChildForm(prev => ({ ...prev, [name]: processedValue }));
+//   };
+
+//   const openModal = (type, index = null) => {
+//     setCurrentChildType(type);
+//     setEditingIndex(index);
+    
+//     if (index !== null && employee[type] && employee[type][index]) {
+//       setChildForm({ ...employee[type][index] });
+//     } else {
+//       setChildForm(getEmptyChildForm(type));
+//     }
+//     setModalOpen(true);
+//   };
+
+//   const getEmptyChildForm = (type) => {
+//     switch(type) {
+//       case 'leave_details':
+//         return {
+//           from_date: '',
+//           to_date: '',
+//           leave_type: '',
+//           number_of_days: '',
+//           reason: '',
+//           status: 'Pending'
+//         };
+//       case 'disciplinary_records':
+//         return {
+//           date_of_incident: '',
+//           incident_type: '',
+//           severity: '',
+//           action_taken: '',
+//           remarks: '',
+//           status: 'Open'
+//         };
+//       case 'guarantees':
+//         return {
+//           guaranted_employee: employee?.employee_id || '',
+//           guaranteetype: '',
+//           start_date: '',
+//           end_date: '',
+//           status: 'Active',
+//           remarks: ''
+//         };
+//       case 'medical_details':
+//         return {
+//           medical_year: new Date().getFullYear(),
+//           medical_max_limit: 30000, // Default value from backend
+//           medical_used: 0,
+//           medica_remain: 30000 // Auto-calculated as max_limit - used
+//         };
+//       case 'performance_records':
+//         return {
+//           period: '',
+//           score: '',
+//           rating: '',
+//           remarks: ''
+//         };
+//       default:
+//         return {};
+//     }
+//   };
+
+//   const validateChildForm = () => {
+//     switch(currentChildType) {
+//       case 'leave_details':
+//         if (!childForm.from_date) return 'From Date is required';
+//         if (!childForm.to_date) return 'To Date is required';
+//         if (!childForm.leave_type) return 'Leave Type is required';
+//         if (!childForm.number_of_days) return 'Number of Days is required';
+//         const days = parseFloat(childForm.number_of_days);
+//         if (isNaN(days) || days <= 0) return 'Number of Days must be greater than 0';
+        
+//         if (new Date(childForm.from_date) > new Date(childForm.to_date)) {
+//           return 'From Date cannot be later than To Date';
+//         }
+//         break;
+//       case 'disciplinary_records':
+//         if (!childForm.date_of_incident) return 'Date of Incident is required';
+//         if (!childForm.incident_type) return 'Incident Type is required';
+//         if (!childForm.severity) return 'Severity is required';
+//         if (!severityOptions.includes(childForm.severity)) {
+//           return `Severity must be one of: ${severityOptions.join(', ')}`;
+//         }
+//         if (!incidentStatusOptions.includes(childForm.status)) {
+//           return `Status must be one of: ${incidentStatusOptions.join(', ')}`;
+//         }
+//         break;
+//       case 'guarantees':
+//         if (!childForm.guaranted_employee) return 'Guaranteed Employee is required';
+//         if (!childForm.guaranteetype) return 'Guarantee Type is required';
+//         if (!guaranteeTypeOptions.includes(childForm.guaranteetype)) {
+//           return `Guarantee Type must be one of: ${guaranteeTypeOptions.join(', ')}`;
+//         }
+//         if (!guaranteeStatusOptions.includes(childForm.status)) {
+//           return `Status must be one of: ${guaranteeStatusOptions.join(', ')}`;
+//         }
+        
+//         if (childForm.start_date && childForm.end_date) {
+//           if (new Date(childForm.start_date) > new Date(childForm.end_date)) {
+//             return 'Start Date cannot be later than End Date';
+//           }
+//         }
+//         break;
+//       case 'medical_details':
+//         if (!childForm.medical_year) return 'Medical Year is required';
+//         if (!childForm.medical_max_limit) return 'Medical Max Limit is required';
+        
+//         const maxLimit = parseFloat(childForm.medical_max_limit);
+//         const used = parseFloat(childForm.medical_used || 0);
+        
+//         if (isNaN(maxLimit)) return 'Medical Max Limit must be a number';
+//         if (isNaN(used)) return 'Medical Used must be a number';
+//         if (used > maxLimit) return 'Medical Used cannot exceed Medical Max Limit';
+        
+//         // Auto-calculate medical_remain
+//         childForm.medica_remain = maxLimit - used;
+//         break;
+//       case 'performance_records':
+//         if (!childForm.period) return 'Period is required';
+//         if (!childForm.score) return 'Score is required';
+//         const score = parseFloat(childForm.score);
+//         if (isNaN(score) || score < 0 || score > 100) {
+//           return 'Score must be between 0 and 100';
+//         }
+//         if (childForm.rating && !ratingOptions.includes(childForm.rating)) {
+//           return `Rating must be one of: ${ratingOptions.join(', ')}`;
+//         }
+//         break;
+//       default:
+//         break;
+//     }
+//     return null;
+//   };
+
+//   const preparePayload = () => {
+//     const payload = { ...employee };
+    
+//     // Ensure all numeric fields in medical_details are numbers
+//     if (payload.medical_details && Array.isArray(payload.medical_details)) {
+//       payload.medical_details = payload.medical_details.map(detail => ({
+//         ...detail,
+//         medical_year: parseInt(detail.medical_year) || new Date().getFullYear(),
+//         medical_max_limit: parseFloat(detail.medical_max_limit) || 30000,
+//         medical_used: parseFloat(detail.medical_used) || 0,
+//         medica_remain: parseFloat(detail.medica_remain) || 
+//           (parseFloat(detail.medical_max_limit) - (parseFloat(detail.medical_used) || 0))
+//       }));
+//     }
+    
+//     // Ensure leave_details numeric fields
+//     if (payload.leave_details && Array.isArray(payload.leave_details)) {
+//       payload.leave_details = payload.leave_details.map(detail => ({
+//         ...detail,
+//         number_of_days: parseFloat(detail.number_of_days) || 0
+//       }));
+//     }
+    
+//     // Ensure performance_records numeric fields
+//     if (payload.performance_records && Array.isArray(payload.performance_records)) {
+//       payload.performance_records = payload.performance_records.map(detail => ({
+//         ...detail,
+//         score: parseFloat(detail.score) || 0
+//       }));
+//     }
+    
+//     return payload;
+//   };
+
+//   const saveChildRecord = async () => {
+//     const validationError = validateChildForm();
+//     if (validationError) {
+//       showToast(validationError, "error");
+//       return;
+//     }
+
+//     const payload = preparePayload();
+    
+//     if (!payload[currentChildType]) {
+//       payload[currentChildType] = [];
+//     }
+
+//     // Ensure numeric values are numbers before saving
+//     const processedRecord = { ...childForm };
+    
+//     if (currentChildType === 'medical_details') {
+//       processedRecord.medical_year = parseInt(processedRecord.medical_year) || new Date().getFullYear();
+//       processedRecord.medical_max_limit = parseFloat(processedRecord.medical_max_limit) || 30000;
+//       processedRecord.medical_used = parseFloat(processedRecord.medical_used) || 0;
+//       processedRecord.medica_remain = processedRecord.medical_max_limit - processedRecord.medical_used;
+//     }
+    
+//     if (currentChildType === 'leave_details') {
+//       processedRecord.number_of_days = parseFloat(processedRecord.number_of_days) || 0;
+//     }
+    
+//     if (currentChildType === 'performance_records') {
+//       processedRecord.score = parseFloat(processedRecord.score) || 0;
+//     }
+
+//     if (editingIndex !== null) {
+//       payload[currentChildType][editingIndex] = processedRecord;
+//     } else {
+//       payload[currentChildType].push(processedRecord);
+//     }
+
+//     try {
+//       const updated = await updateEmployee(employee.employee_id, payload);
+//       setEmployee(updated.data || updated);
+//       closeModal();
+//       showToast(`${currentChildType.replace(/_/g, ' ')} saved successfully!`, "success");
+//     } catch (error) {
+//       console.error('Error saving record:', error);
+//       const errorMessage = extractErrorMessage(error);
+//       showToast(`Failed to save record: ${errorMessage}`, "error");
+//     }
+//   };
+
+//   const deleteChildRecord = async (type, index) => {
+//     if (!window.confirm('Are you sure you want to delete this record? This action cannot be undone.')) return;
+    
+//     const payload = preparePayload();
+//     if (payload[type] && payload[type][index]) {
+//       payload[type].splice(index, 1);
+      
+//       try {
+//         const updated = await updateEmployee(employee.employee_id, payload);
+//         setEmployee(updated.data || updated);
+//         showToast(`${type.replace(/_/g, ' ')} deleted successfully!`, "success");
+//       } catch (error) {
+//         console.error('Error deleting record:', error);
+//         const errorMessage = extractErrorMessage(error);
+//         showToast(`Failed to delete record: ${errorMessage}`, "error");
+//       }
+//     }
+//   };
+
+//   const closeModal = () => {
+//     setModalOpen(false);
+//     setCurrentChildType('');
+//     setEditingIndex(null);
+//     setChildForm({});
+//   };
+
+//   const renderChildSection = (records, title, type, columns, dataMapping) => {
+//     const recordsArray = records || [];
+//     const hasRecords = recordsArray.length > 0;
+
+//     return (
+//       <div className="child-section">
+//         <div className="section-header">
+//           <h3>{title}</h3>
+//           <button 
+//             className="btn-create"
+//             onClick={() => openModal(type)}
+//           >
+//             + Create {title}
+//           </button>
+//         </div>
+
+//         {!hasRecords ? (
+//           <div className="empty-state-mini">
+//             <span className="empty-icon-mini">📋</span>
+//             <p>No {title.toLowerCase()} records found</p>
+//             <button 
+//               className="btn-create-mini"
+//               onClick={() => openModal(type)}
+//             >
+//               Create First Record
+//             </button>
+//           </div>
+//         ) : (
+//           <div className="table-responsive">
+//             <table className="child-table">
+//               <thead>
+//                 <tr>
+//                   {columns.map(col => <th key={col}>{col}</th>)}
+//                   <th>Actions</th>
+//                 </tr>
+//               </thead>
+//               <tbody>
+//                 {recordsArray.map((rec, idx) => (
+//                   <tr key={idx}>
+//                     {columns.map(col => {
+//                       const fieldName = dataMapping[col];
+//                       let value = rec[fieldName];
+                      
+//                       if (fieldName === 'medical_max_limit' || fieldName === 'medical_used' || fieldName === 'medica_remain') {
+//                         value = value ? `ETB ${parseFloat(value).toLocaleString()}` : '-';
+//                       }
+//                       else if ((fieldName === 'from_date' || fieldName === 'to_date' || fieldName === 'start_date' || 
+//                                 fieldName === 'end_date' || fieldName === 'date_of_incident' || fieldName === 'period') && value) {
+//                         value = new Date(value).toLocaleDateString();
+//                       }
+//                       else if (fieldName === 'score' && value) {
+//                         value = `${parseFloat(value).toFixed(1)}%`;
+//                       }
+//                       else if (fieldName === 'number_of_days' && value) {
+//                         value = `${parseFloat(value).toFixed(1)} days`;
+//                       }
+                      
+//                       return <td key={col}>{value || '-'}</td>;
+//                     })}
+//                     <td className="action-buttons-cell">
+//                       <button 
+//                         className="btn-edit-mini"
+//                         onClick={() => openModal(type, idx)}
+//                         title="Edit"
+//                       >
+//                         ✏️
+//                       </button>
+//                       <button 
+//                         className="btn-delete-mini"
+//                         onClick={() => deleteChildRecord(type, idx)}
+//                         title="Delete"
+//                       >
+//                         🗑️
+//                       </button>
+//                     </td>
+//                   </tr>
+//                 ))}
+//               </tbody>
+//             </table>
+//           </div>
+//         )}
+//       </div>
+//     );
+//   };
+
+//   if (loading) return (
+//     <div className="loading-container">
+//       <div className="loader"></div>
+//       <p>Loading employee details...</p>
+//     </div>
+//   );
+  
+//   if (error) return (
+//     <div className="error-container">
+//       <span className="error-icon">⚠️</span>
+//       <div className="error-details">
+//         <h3>Error Loading Employee</h3>
+//         <p>{error}</p>
+//         <button onClick={fetchEmployeeData} className="btn-retry">Try Again</button>
+//       </div>
+//     </div>
+//   );
+  
+//   if (!employee) return (
+//     <div className="error-container">
+//       <p>No employee found with ID: {id}</p>
+//     </div>
+//   );
+
+//   return (
+//     <div className="employee-detail-container">
+//       {/* Toast Notification */}
+//       {toast && (
+//         <div className={`toast toast-${toast.type}`}>
+//           <div className="toast-content">
+//             <span className="toast-icon">
+//               {toast.type === 'success' ? '✅' : '❌'}
+//             </span>
+//             <span className="toast-message">{toast.message}</span>
+//           </div>
+//         </div>
+//       )}
+
+//       <div className="detail-wrapper">
+//         {/* Header */}
+//         <div className="detail-header">
+//           <div className="header-left">
+//             <h1>Employee Details</h1>
+//             <p>View and manage employee information</p>
+//           </div>
+//           <div className="employee-status-badge">
+//             <span className={`status-badge-large status-${employee.status?.toLowerCase().replace(/ /g, '-')}`}>
+//               {employee.status}
+//             </span>
+//           </div>
+//         </div>
+
+//         {/* Main Info Grid */}
+//         <div className="info-grid">
+//           {/* Personal Info Card */}
+//           <div className="info-card">
+//             <div className="card-header">
+//               <span className="card-icon">👤</span>
+//               <h3>Personal Information</h3>
+//             </div>
+//             <div className="card-content">
+//               <div className="info-row">
+//                 <span className="info-label">Employee ID:</span>
+//                 <span className="info-value employee-id-badge">{employee.employee_id}</span>
+//               </div>
+//               <div className="info-row">
+//                 <span className="info-label">Full Name:</span>
+//                 <span className="info-value">{employee.first_name} {employee.last_name}</span>
+//               </div>
+//               <div className="info-row">
+//                 <span className="info-label">Date of Birth:</span>
+//                 <span className="info-value">{employee.date_of_birth ? new Date(employee.date_of_birth).toLocaleDateString() : '-'}</span>
+//               </div>
+//               <div className="info-row">
+//                 <span className="info-label">Gender:</span>
+//                 <span className="info-value">{employee.gender || '-'}</span>
+//               </div>
+//               <div className="info-row">
+//                 <span className="info-label">Phone:</span>
+//                 <span className="info-value">{employee.phone || '-'}</span>
+//               </div>
+//               <div className="info-row">
+//                 <span className="info-label">Email:</span>
+//                 <span className="info-value">{employee.email || '-'}</span>
+//               </div>
+//               <div className="info-row">
+//                 <span className="info-label">Address:</span>
+//                 <span className="info-value">{employee.address || '-'}</span>
+//               </div>
+//             </div>
+//           </div>
+
+//           {/* Employment Info Card */}
+//           <div className="info-card">
+//             <div className="card-header">
+//               <span className="card-icon">💼</span>
+//               <h3>Employment Information</h3>
+//             </div>
+//             <div className="card-content">
+//               <div className="info-row">
+//                 <span className="info-label">Job Title:</span>
+//                 <span className="info-value">{employee.job_title || '-'}</span>
+//               </div>
+//               <div className="info-row">
+//                 <span className="info-label">Department:</span>
+//                 <span className="info-value">{employee.department || '-'}</span>
+//               </div>
+//               <div className="info-row">
+//                 <span className="info-label">Location:</span>
+//                 <span className="info-value">{employee.location || '-'}</span>
+//               </div>
+//               <div className="info-row">
+//                 <span className="info-label">Start Date:</span>
+//                 <span className="info-value">{employee.employment_start_date ? new Date(employee.employment_start_date).toLocaleDateString() : '-'}</span>
+//               </div>
+//               <div className="info-row">
+//                 <span className="info-label">End Date:</span>
+//                 <span className="info-value">{employee.employment_end_date ? new Date(employee.employment_end_date).toLocaleDateString() : '-'}</span>
+//               </div>
+//               <div className="info-row">
+//                 <span className="info-label">Project:</span>
+//                 <span className="info-value project-badge">{employee.project || '-'}</span>
+//               </div>
+//             </div>
+//           </div>
+
+//           {/* Emergency Contact Card */}
+//           <div className="info-card">
+//             <div className="card-header">
+//               <span className="card-icon">🚨</span>
+//               <h3>Emergency Contact</h3>
+//             </div>
+//             <div className="card-content">
+//               <div className="info-row">
+//                 <span className="info-label">Contact Name:</span>
+//                 <span className="info-value">{employee.emergency_contact_name || '-'}</span>
+//               </div>
+//               <div className="info-row">
+//                 <span className="info-label">Relationship:</span>
+//                 <span className="info-value">{employee.emergency_contact_relationship || '-'}</span>
+//               </div>
+//               <div className="info-row">
+//                 <span className="info-label">Phone:</span>
+//                 <span className="info-value">{employee.emergency_contact_phone || '-'}</span>
+//               </div>
+//             </div>
+//           </div>
+//         </div>
+
+//         {/* Child Records Sections */}
+//         <div className="child-sections">
+//           {/* Leave Details */}
+//           {renderChildSection(
+//             employee.leave_details,
+//             'Leave Details',
+//             'leave_details',
+//             ['From Date', 'To Date', 'Leave Type', 'Number of Days', 'Reason', 'Status'],
+//             {
+//               'From Date': 'from_date',
+//               'To Date': 'to_date',
+//               'Leave Type': 'leave_type',
+//               'Number of Days': 'number_of_days',
+//               'Reason': 'reason',
+//               'Status': 'status'
+//             }
+//           )}
+
+//           {/* Disciplinary Records */}
+//           {renderChildSection(
+//             employee.disciplinary_records,
+//             'Disciplinary Records',
+//             'disciplinary_records',
+//             ['Date of Incident', 'Incident Type', 'Severity', 'Action Taken', 'Remarks', 'Status'],
+//             {
+//               'Date of Incident': 'date_of_incident',
+//               'Incident Type': 'incident_type',
+//               'Severity': 'severity',
+//               'Action Taken': 'action_taken',
+//               'Remarks': 'remarks',
+//               'Status': 'status'
+//             }
+//           )}
+
+//           {/* Guarantees */}
+//           {renderChildSection(
+//             employee.guarantees,
+//             'Guarantees',
+//             'guarantees',
+//             ['Guaranteed Employee', 'Guarantee Type', 'Start Date', 'End Date', 'Status', 'Remarks'],
+//             {
+//               'Guaranteed Employee': 'guaranted_employee',
+//               'Guarantee Type': 'guaranteetype',
+//               'Start Date': 'start_date',
+//               'End Date': 'end_date',
+//               'Status': 'status',
+//               'Remarks': 'remarks'
+//             }
+//           )}
+
+//           {/* Medical Details */}
+//           {renderChildSection(
+//             employee.medical_details,
+//             'Medical Details',
+//             'medical_details',
+//             ['Medical Year', 'Medical Max Limit', 'Medical Used', 'Medical Remain'],
+//             {
+//               'Medical Year': 'medical_year',
+//               'Medical Max Limit': 'medical_max_limit',
+//               'Medical Used': 'medical_used',
+//               'Medical Remain': 'medica_remain'
+//             }
+//           )}
+
+//           {/* Performance Records */}
+//           {renderChildSection(
+//             employee.performance_records,
+//             'Performance Records',
+//             'performance_records',
+//             ['Period', 'Score', 'Rating', 'Remarks'],
+//             {
+//               'Period': 'period',
+//               'Score': 'score',
+//               'Rating': 'rating',
+//               'Remarks': 'remarks'
+//             }
+//           )}
+//         </div>
+
+//         {/* Modal for Create/Edit */}
+//         {modalOpen && (
+//           <div className="modal-overlay" onClick={closeModal}>
+//             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+//               <div className="modal-header">
+//                 <h3>{editingIndex !== null ? 'Edit' : 'Create'} {currentChildType.replace(/_/g, ' ')}</h3>
+//                 <button className="modal-close" onClick={closeModal}>✕</button>
+//               </div>
+//               <div className="modal-body">
+//                 {/* Leave Details Form */}
+//                 {currentChildType === 'leave_details' && (
+//                   <div className="form-group">
+//                     <label>From Date *</label>
+//                     <input type="date" name="from_date" value={childForm.from_date || ''} onChange={handleChildChange} />
+                    
+//                     <label>To Date *</label>
+//                     <input type="date" name="to_date" value={childForm.to_date || ''} onChange={handleChildChange} />
+                    
+//                     <label>Leave Type *</label>
+//                     <select name="leave_type" value={childForm.leave_type || ''} onChange={handleChildChange}>
+//                       <option value="">Select Leave Type</option>
+//                       {leaveTypeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+//                     </select>
+                    
+//                     <label>Number of Days *</label>
+//                     <input type="number" step="0.5" name="number_of_days" value={childForm.number_of_days || ''} onChange={handleChildChange} />
+                    
+//                     <label>Reason</label>
+//                     <textarea name="reason" rows="3" value={childForm.reason || ''} onChange={handleChildChange} placeholder="Reason for leave"></textarea>
+                    
+//                     <label>Status</label>
+//                     <select name="status" value={childForm.status || ''} onChange={handleChildChange}>
+//                       {leaveStatusOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+//                     </select>
+//                   </div>
+//                 )}
+
+//                 {/* Disciplinary Records Form */}
+//                 {currentChildType === 'disciplinary_records' && (
+//                   <div className="form-group">
+//                     <label>Date of Incident *</label>
+//                     <input type="date" name="date_of_incident" value={childForm.date_of_incident || ''} onChange={handleChildChange} />
+                    
+//                     <label>Incident Type *</label>
+//                     <select name="incident_type" value={childForm.incident_type || ''} onChange={handleChildChange}>
+//                       <option value="">Select Incident Type</option>
+//                       {incidentTypeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+//                     </select>
+                    
+//                     <label>Severity *</label>
+//                     <select name="severity" value={childForm.severity || ''} onChange={handleChildChange}>
+//                       <option value="">Select Severity</option>
+//                       {severityOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+//                     </select>
+                    
+//                     <label>Action Taken</label>
+//                     <textarea name="action_taken" rows="3" value={childForm.action_taken || ''} onChange={handleChildChange} placeholder="Action taken against employee"></textarea>
+                    
+//                     <label>Remarks</label>
+//                     <textarea name="remarks" rows="3" value={childForm.remarks || ''} onChange={handleChildChange} placeholder="Additional remarks"></textarea>
+                    
+//                     <label>Status</label>
+//                     <select name="status" value={childForm.status || ''} onChange={handleChildChange}>
+//                       {incidentStatusOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+//                     </select>
+//                   </div>
+//                 )}
+
+//                 {/* Guarantees Form */}
+//                 {currentChildType === 'guarantees' && (
+//                   <div className="form-group">
+//                     <label>Guaranteed Employee *</label>
+//                     <input 
+//                       type="text" 
+//                       name="guaranted_employee" 
+//                       placeholder="Employee ID or Name" 
+//                       value={childForm.guaranted_employee || ''} 
+//                       onChange={handleChildChange}
+//                       readOnly={!editingIndex && childForm.guaranted_employee === employee?.employee_id}
+//                       className={!editingIndex && childForm.guaranted_employee === employee?.employee_id ? 'disabled-input' : ''}
+//                     />
+//                     {!editingIndex && childForm.guaranted_employee === employee?.employee_id && (
+//                       <small className="field-hint">Auto-populated with current employee ID</small>
+//                     )}
+                    
+//                     <label>Guarantee Type *</label>
+//                     <select name="guaranteetype" value={childForm.guaranteetype || ''} onChange={handleChildChange}>
+//                       <option value="">Select Guarantee Type</option>
+//                       {guaranteeTypeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+//                     </select>
+                    
+//                     <label>Start Date</label>
+//                     <input type="date" name="start_date" value={childForm.start_date || ''} onChange={handleChildChange} />
+                    
+//                     <label>End Date</label>
+//                     <input type="date" name="end_date" value={childForm.end_date || ''} onChange={handleChildChange} />
+                    
+//                     <label>Status</label>
+//                     <select name="status" value={childForm.status || ''} onChange={handleChildChange}>
+//                       {guaranteeStatusOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+//                     </select>
+                    
+//                     <label>Remarks</label>
+//                     <textarea name="remarks" rows="3" value={childForm.remarks || ''} onChange={handleChildChange} placeholder="Additional remarks"></textarea>
+//                   </div>
+//                 )}
+
+//                 {/* Medical Details Form */}
+//                 {currentChildType === 'medical_details' && (
+//                   <div className="form-group">
+//                     <label>Medical Year *</label>
+//                     <input type="number" name="medical_year" value={childForm.medical_year || ''} onChange={handleChildChange} />
+                    
+//                     <label>Medical Max Limit (ETB) *</label>
+//                     <input 
+//                       type="number" 
+//                       step="0.01" 
+//                       name="medical_max_limit" 
+//                       value={childForm.medical_max_limit || 30000} 
+//                       onChange={handleChildChange}
+//                       placeholder="Default: 30000"
+//                     />
+//                     <small className="field-hint">Default value: 30,000 ETB</small>
+                    
+//                     <label>Medical Used (ETB)</label>
+//                     <input 
+//                       type="number" 
+//                       step="0.01" 
+//                       name="medical_used" 
+//                       value={childForm.medical_used || 0} 
+//                       onChange={handleChildChange}
+//                     />
+                    
+//                     <label>Medical Remain (ETB) - Auto-calculated</label>
+//                     <input 
+//                       type="number" 
+//                       step="0.01" 
+//                       name="medica_remain" 
+//                       value={
+//                         childForm.medica_remain !== undefined && childForm.medica_remain !== '' 
+//                           ? childForm.medica_remain 
+//                           : (childForm.medical_max_limit && childForm.medical_used !== undefined 
+//                               ? parseFloat(childForm.medical_max_limit || 30000) - parseFloat(childForm.medical_used || 0)
+//                               : 30000)
+//                       } 
+//                       readOnly 
+//                       disabled 
+//                       className="disabled-input" 
+//                     />
+//                     <small className="field-hint">Automatically calculated as Max Limit - Used</small>
+//                   </div>
+//                 )}
+
+//                 {/* Performance Records Form */}
+//                 {currentChildType === 'performance_records' && (
+//                   <div className="form-group">
+//                     <label>Period *</label>
+//                     <input type="date" name="period" value={childForm.period || ''} onChange={handleChildChange} />
+                    
+//                     <label>Score * (0-100)</label>
+//                     <input type="number" step="0.1" min="0" max="100" name="score" value={childForm.score || ''} onChange={handleChildChange} />
+                    
+//                     <label>Rating</label>
+//                     <select name="rating" value={childForm.rating || ''} onChange={handleChildChange}>
+//                       <option value="">Select Rating</option>
+//                       {ratingOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+//                     </select>
+                    
+//                     <label>Remarks</label>
+//                     <textarea name="remarks" rows="3" value={childForm.remarks || ''} onChange={handleChildChange} placeholder="Performance remarks"></textarea>
+//                   </div>
+//                 )}
+//               </div>
+//               <div className="modal-footer">
+//                 <button className="btn-cancel" onClick={closeModal}>Cancel</button>
+//                 <button className="btn-save" onClick={saveChildRecord}>Save</button>
+//               </div>
+//             </div>
+//           </div>
+//         )}
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default EmployeeDetail;
+
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { getEmployee, updateEmployee } from '../../api/hrapi';
 import './EmployeeDetail.css';
-import { getEmployee } from '../../api/hrapi';
 
 const EmployeeDetail = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
   const [employee, setEmployee] = useState(null);
-  const [activeTab, setActiveTab] = useState('overview');
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-useEffect(() => {
-  const fetchEmployee = async () => {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [currentChildType, setCurrentChildType] = useState('');
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [childForm, setChildForm] = useState({});
+  const [toast, setToast] = useState(null);
+
+  // ========== SELECT OPTIONS - EXACTLY AS PER BACKEND ==========
+  
+  // Leave Details Options
+  const leaveTypeOptions = [
+    "Annual Leave",
+    "Sick Leave", 
+    "Emergency Leave",
+    "Maternity Leave",
+    "Paternity Leave",
+    "Parental Leave",
+    "Compassionate Leave",
+    "Study Leave",
+    "Sabbatical Leave",
+    "Unpaid Leave",
+    "Marriage Leave"
+  ];
+  
+  const leaveStatusOptions = ["Pending", "Approved", "Rejected"];
+  
+  // Guarantees Options
+  const guaranteeTypeOptions = ["Personal", "Financial", "Loan", "Job"];
+  const guaranteeStatusOptions = ["Active", "Inactive", "Completed"];
+  
+  // Disciplinary Records Options
+  const incidentTypeOptions = [
+    "Warning",
+    "Misconduct",
+    "Policy Violation",
+    "Harassment",
+    "Discrimination",
+    "Theft or Fraud",
+    "Conflict of Interest",
+    "Safety Violation",
+    "Negligence",
+    "Abuse of Authority",
+    "Insubordination",
+    "Breach of Confidentiality",
+    "Unprofessional Behavior",
+    "Workplace Violence",
+    "Data or IT Security Breach"
+  ];
+  
+  const severityOptions = ["Minor", "Major", "Critical"];
+  const incidentStatusOptions = ["Open", "Closed", "Resolved"];
+  
+  // Performance Records Options
+  const ratingOptions = ["Average", "Good", "Excellent"];
+  
+  // Employee Status Options (for main employee)
+  const employeeStatusOptions = [
+    "Newly Hired",
+    "Active",
+    "Probation",
+    "Contract Ended",
+    "Resigned",
+    "Retired"
+  ];
+
+  useEffect(() => {
+    if (!id) return;
+    fetchEmployeeData();
+  }, [id]);
+
+  const fetchEmployeeData = async () => {
     try {
-      const data = await getEmployee(id); // API returns the flat object
-
-      if (!data) {
-        console.error('No data from getEmployee');
-        return;
-      }
-
-      // Map API fields to component expected keys
-      const mappedEmployee = {
-        id: data.name, // API 'name' as id
-        firstName: data.first_name,
-        lastName: data.last_name,
-        fullName: data.full_name,
-        dateOfBirth: data.date_of_birth,
-        gender: data.gender,
-        phone: data.phone,
-        email: data.email,
-        address: data.address,
-        emergencyContactName: data.emergency_contact_name,
-        emergencyContactRelationship: data.emergency_contact_relationship,
-        emergencyContactPhone: data.emergency_contact_phone,
-        jobTitle: data.job_title,
-        department: data.department,
-        location: data.location,
-        startDate: data.employment_start_date,
-        status: data.status,
-        medicalMaxLimit: data.medical_max_limit,
-        medicalUsed: data.medical_used,
-        medicalRemaining: data.medical_remaining,
-        totalLeavesTaken: data.total_leaves_taken,
-        activeGuarantees: data.active_guarantees_count,
-        disciplinaryCount: data.disciplinary_records_count,
+      setLoading(true);
+      const response = await getEmployee(id);
       
-      };
-
-      setEmployee(mappedEmployee);
-
-    } catch (err) {
-      console.error('Failed to fetch employee:', err);
+      // Ensure numeric fields are properly typed in medical_details
+      if (response.medical_details && Array.isArray(response.medical_details)) {
+        response.medical_details = response.medical_details.map(detail => ({
+          ...detail,
+          medical_year: detail.medical_year ? parseInt(detail.medical_year) : new Date().getFullYear(),
+          medical_claim_date: detail.medical_claim_date || new Date().toISOString().split('T')[0],
+          medical_max_limit: detail.medical_max_limit ? parseFloat(detail.medical_max_limit) : 0,
+          medical_used: detail.medical_used ? parseFloat(detail.medical_used) : 0,
+          medica_remain: detail.medica_remain ? parseFloat(detail.medica_remain) : 
+            (detail.medical_max_limit ? parseFloat(detail.medical_max_limit) - (parseFloat(detail.medical_used) || 0) : 0)
+        }));
+      }
+      
+      setEmployee(response);
+      setError(null);
+    } catch (error) {
+      console.error('Error fetching employee:', error);
+      const errorMessage = extractErrorMessage(error);
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  fetchEmployee();
-}, [id]);
-
-  const getStatusBadge = (status) => {
-    const badges = {
-      'Active': { class: 'badge-active', icon: FiCheckCircle },
-      'Probation': { class: 'badge-probation', icon: FiClock },
-      'Newly Hired': { class: 'badge-new', icon: FiStar },
-      'Notice Period': { class: 'badge-notice', icon: FiAlertTriangle },
-      'Contract Ended': { class: 'badge-ended', icon: FiXCircle },
-      'Resigned': { class: 'badge-resigned', icon: FiTrendingUp },
-      'Retired': { class: 'badge-retired', icon: FiAward }
-    };
-    return badges[status] || { class: 'badge-default', icon: FiUser };
+  // Extract detailed error message from backend response
+  const extractErrorMessage = (error) => {
+    if (error.response) {
+      const { data, status } = error.response;
+      
+      if (data) {
+        if (data.exception) {
+          return data.exception;
+        }
+        if (data.message) {
+          return data.message;
+        }
+        if (data._server_messages) {
+          try {
+            const messages = JSON.parse(data._server_messages);
+            if (messages && messages.length > 0) {
+              return messages[0];
+            }
+          } catch (e) {
+            return data._server_messages;
+          }
+        }
+        if (data.error) {
+          return data.error;
+        }
+        if (typeof data === 'string') {
+          return data;
+        }
+      }
+      
+      if (status === 404) return 'Resource not found';
+      if (status === 403) return 'You do not have permission to perform this action';
+      if (status === 401) return 'Authentication required. Please log in again.';
+      if (status === 500) return 'Server error. Please try again later.';
+    }
+    
+    if (error.message) {
+      return error.message;
+    }
+    
+    return 'An unexpected error occurred. Please try again.';
   };
 
-  const tabs = [
-    { id: 'overview', label: 'Overview', icon: FiUser, color: '#4f46e5' },
-    { id: 'medical', label: 'Medical Allowance', icon: FiHeart, color: '#f59e0b' },
-    { id: 'guarantee', label: 'Guarantee Tracker', icon: FiShield, color: '#8b5cf6' },
-    { id: 'disciplinary', label: 'Disciplinary', icon: FiAlertTriangle, color: '#ef4444' }
-  ];
+  const showToast = (message, type = "success") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 5000);
+  };
 
-  if (loading) {
+  const handleChildChange = (e) => {
+    const { name, value } = e.target;
+    
+    // Handle numeric fields conversion
+    let processedValue = value;
+    if (name === 'medical_year' || name === 'number_of_days' || name === 'score') {
+      processedValue = value === '' ? '' : parseFloat(value);
+    } else if (name === 'medical_max_limit' || name === 'medical_used') {
+      processedValue = value === '' ? '' : parseFloat(value);
+    }
+    
+    setChildForm(prev => ({ ...prev, [name]: processedValue }));
+  };
+
+  const openModal = (type, index = null) => {
+    setCurrentChildType(type);
+    setEditingIndex(index);
+    
+    if (index !== null && employee[type] && employee[type][index]) {
+      setChildForm({ ...employee[type][index] });
+    } else {
+      setChildForm(getEmptyChildForm(type));
+    }
+    setModalOpen(true);
+  };
+
+  const getEmptyChildForm = (type) => {
+    switch(type) {
+      case 'leave_details':
+        return {
+          from_date: '',
+          to_date: '',
+          leave_type: '',
+          number_of_days: '',
+          reason: '',
+          status: 'Pending'
+        };
+      case 'disciplinary_records':
+        return {
+          date_of_incident: '',
+          incident_type: '',
+          severity: '',
+          action_taken: '',
+          remarks: '',
+          status: 'Open'
+        };
+      case 'guarantees':
+        return {
+          guaranted_employee: employee?.employee_id || '',
+          guaranteetype: '',
+          start_date: '',
+          end_date: '',
+          status: 'Active',
+          remarks: ''
+        };
+      case 'medical_details':
+        const existingMedicalRecord = employee?.medical_details && employee.medical_details.length > 0;
+        const firstMedicalRecord = existingMedicalRecord ? employee.medical_details[0] : null;
+        
+        return {
+          medical_year: new Date().getFullYear(),
+          medical_claim_date: new Date().toISOString().split('T')[0],
+          // If editing existing record, use its max limit
+          // If creating new but records exist, use the first record's max limit
+          // Otherwise, leave empty for user to set
+          medical_max_limit: editingIndex !== null && childForm.medical_max_limit 
+            ? childForm.medical_max_limit 
+            : (existingMedicalRecord && editingIndex === null 
+                ? firstMedicalRecord.medical_max_limit 
+                : ''),
+          medical_used: 0,
+          medica_remain: 0
+        };
+      case 'performance_records':
+        return {
+          period: '',
+          score: '',
+          rating: '',
+          remarks: ''
+        };
+      default:
+        return {};
+    }
+  };
+
+  const validateChildForm = () => {
+    switch(currentChildType) {
+      case 'leave_details':
+        if (!childForm.from_date) return 'From Date is required';
+        if (!childForm.to_date) return 'To Date is required';
+        if (!childForm.leave_type) return 'Leave Type is required';
+        if (!childForm.number_of_days) return 'Number of Days is required';
+        const days = parseFloat(childForm.number_of_days);
+        if (isNaN(days) || days <= 0) return 'Number of Days must be greater than 0';
+        
+        if (new Date(childForm.from_date) > new Date(childForm.to_date)) {
+          return 'From Date cannot be later than To Date';
+        }
+        break;
+      case 'disciplinary_records':
+        if (!childForm.date_of_incident) return 'Date of Incident is required';
+        if (!childForm.incident_type) return 'Incident Type is required';
+        if (!childForm.severity) return 'Severity is required';
+        if (!severityOptions.includes(childForm.severity)) {
+          return `Severity must be one of: ${severityOptions.join(', ')}`;
+        }
+        if (!incidentStatusOptions.includes(childForm.status)) {
+          return `Status must be one of: ${incidentStatusOptions.join(', ')}`;
+        }
+        break;
+      case 'guarantees':
+        if (!childForm.guaranted_employee) return 'Guaranteed Employee is required';
+        if (!childForm.guaranteetype) return 'Guarantee Type is required';
+        if (!guaranteeTypeOptions.includes(childForm.guaranteetype)) {
+          return `Guarantee Type must be one of: ${guaranteeTypeOptions.join(', ')}`;
+        }
+        if (!guaranteeStatusOptions.includes(childForm.status)) {
+          return `Status must be one of: ${guaranteeStatusOptions.join(', ')}`;
+        }
+        
+        if (childForm.start_date && childForm.end_date) {
+          if (new Date(childForm.start_date) > new Date(childForm.end_date)) {
+            return 'Start Date cannot be later than End Date';
+          }
+        }
+        break;
+      case 'medical_details':
+        if (!childForm.medical_year) return 'Medical Year is required';
+        if (!childForm.medical_claim_date) return 'Medical Claim Date is required';
+        
+        const claimDate = new Date(childForm.medical_claim_date);
+        const today = new Date();
+        if (claimDate > today) {
+          return 'Medical Claim Date cannot be in the future';
+        }
+        // Check if this is the first medical record (no existing records)
+        const hasExistingRecords = employee?.medical_details && employee.medical_details.length > 0;
+        const isEditing = editingIndex !== null;
+
+        // For first record, medical_max_limit is required
+        if (!hasExistingRecords && !isEditing) {
+          if (!childForm.medical_max_limit || childForm.medical_max_limit === '') {
+            return 'Medical Max Limit is required for the first medical record';
+          }
+          const maxLimit = parseFloat(childForm.medical_max_limit);
+          if (isNaN(maxLimit) || maxLimit <= 0) {
+            return 'Medical Max Limit must be a positive number';
+          }
+        }
+        
+        const used = parseFloat(childForm.medical_used || 0);
+        if (isNaN(used) || used < 0) return 'Medical Used must be a positive number';
+        
+        // Get the max limit (from existing record or current form)
+        let maxLimit;
+        if (hasExistingRecords && !isEditing) {
+          // For new claims, get the max limit from the first medical record
+          const firstMedicalRecord = employee.medical_details[0];
+          maxLimit = parseFloat(firstMedicalRecord.medical_max_limit);
+          // Set it in the form for validation
+          childForm.medical_max_limit = maxLimit;
+        } else if (isEditing) {
+          maxLimit = parseFloat(childForm.medical_max_limit);
+        } else {
+          maxLimit = parseFloat(childForm.medical_max_limit);
+        }
+        
+        // Calculate total used claims (including current + all previous)
+        let totalUsed = used;
+        if (hasExistingRecords && !isEditing) {
+          // Sum all previous medical_used
+          totalUsed = employee.medical_details.reduce((sum, record) => {
+            return sum + parseFloat(record.medical_used || 0);
+          }, 0) + used;
+        } else if (isEditing) {
+          // For editing, sum all other records plus this one
+          totalUsed = employee.medical_details.reduce((sum, record, idx) => {
+            if (idx !== editingIndex) {
+              return sum + parseFloat(record.medical_used || 0);
+            }
+            return sum + used;
+          }, 0);
+        }
+        
+        if (totalUsed > maxLimit) {
+          return `Medical claims total (${totalUsed.toFixed(2)}) cannot exceed Medical Max Limit (${maxLimit.toFixed(2)})`;
+        }
+        
+        // Auto-calculate medical_remain
+        childForm.medica_remain = maxLimit - totalUsed;
+        break;
+      case 'performance_records':
+        if (!childForm.period) return 'Period is required';
+        if (!childForm.score) return 'Score is required';
+        const score = parseFloat(childForm.score);
+        if (isNaN(score) || score < 0 || score > 100) {
+          return 'Score must be between 0 and 100';
+        }
+        if (childForm.rating && !ratingOptions.includes(childForm.rating)) {
+          return `Rating must be one of: ${ratingOptions.join(', ')}`;
+        }
+        break;
+      default:
+        break;
+    }
+    return null;
+  };
+
+  const preparePayload = () => {
+    const payload = { ...employee };
+    
+    // Ensure all numeric fields in medical_details are numbers
+    if (payload.medical_details && Array.isArray(payload.medical_details)) {
+      payload.medical_details = payload.medical_details.map(detail => ({
+        ...detail,
+        medical_year: parseInt(detail.medical_year) || new Date().getFullYear(),
+        medical_max_limit: parseFloat(detail.medical_max_limit) || 0,
+        medical_used: parseFloat(detail.medical_used) || 0,
+        medica_remain: parseFloat(detail.medica_remain) || 
+          (parseFloat(detail.medical_max_limit) - (parseFloat(detail.medical_used) || 0))
+      }));
+    }
+    
+    // Ensure leave_details numeric fields
+    if (payload.leave_details && Array.isArray(payload.leave_details)) {
+      payload.leave_details = payload.leave_details.map(detail => ({
+        ...detail,
+        number_of_days: parseFloat(detail.number_of_days) || 0
+      }));
+    }
+    
+    // Ensure performance_records numeric fields
+    if (payload.performance_records && Array.isArray(payload.performance_records)) {
+      payload.performance_records = payload.performance_records.map(detail => ({
+        ...detail,
+        score: parseFloat(detail.score) || 0
+      }));
+    }
+    
+    return payload;
+  };
+
+  const saveChildRecord = async () => {
+    const validationError = validateChildForm();
+    if (validationError) {
+      showToast(validationError, "error");
+      return;
+    }
+
+    const payload = preparePayload();
+    
+    if (!payload[currentChildType]) {
+      payload[currentChildType] = [];
+    }
+
+    // Ensure numeric values are numbers before saving
+    const processedRecord = { ...childForm };
+    
+    if (currentChildType === 'medical_details') {
+      const hasExistingRecords = employee?.medical_details && employee.medical_details.length > 0;
+      const isEditing = editingIndex !== null;
+      
+      processedRecord.medical_year = parseInt(processedRecord.medical_year) || new Date().getFullYear();
+      processedRecord.medical_claim_date = processedRecord.medical_claim_date || new Date().toISOString().split('T')[0];
+      
+      // Handle medical_max_limit correctly
+      if (!hasExistingRecords && !isEditing) {
+        // First record - use the user-provided value
+        processedRecord.medical_max_limit = parseFloat(processedRecord.medical_max_limit);
+      } else {
+        // Subsequent records - use existing max limit from first record
+        processedRecord.medical_max_limit = parseFloat(employee.medical_details[0].medical_max_limit);
+      }
+      
+      processedRecord.medical_used = parseFloat(processedRecord.medical_used) || 0;
+      
+      // Calculate total used including this record
+      let totalUsed = processedRecord.medical_used;
+      if (hasExistingRecords && !isEditing) {
+        totalUsed = employee.medical_details.reduce((sum, record) => {
+          return sum + parseFloat(record.medical_used || 0);
+        }, 0) + processedRecord.medical_used;
+      } else if (isEditing) {
+        totalUsed = employee.medical_details.reduce((sum, record, idx) => {
+          if (idx !== editingIndex) {
+            return sum + parseFloat(record.medical_used || 0);
+          }
+          return sum + processedRecord.medical_used;
+        }, 0);
+      }
+      
+      processedRecord.medica_remain = processedRecord.medical_max_limit - totalUsed;
+    }
+    
+    if (currentChildType === 'leave_details') {
+      processedRecord.number_of_days = parseFloat(processedRecord.number_of_days) || 0;
+    }
+    
+    if (currentChildType === 'performance_records') {
+      processedRecord.score = parseFloat(processedRecord.score) || 0;
+    }
+
+    if (editingIndex !== null) {
+      payload[currentChildType][editingIndex] = processedRecord;
+    } else {
+      payload[currentChildType].push(processedRecord);
+    }
+
+    try {
+      const updated = await updateEmployee(employee.employee_id, payload);
+      setEmployee(updated.data || updated);
+      closeModal();
+      showToast(`${currentChildType.replace(/_/g, ' ')} saved successfully!`, "success");
+    } catch (error) {
+      console.error('Error saving record:', error);
+      const errorMessage = extractErrorMessage(error);
+      showToast(`Failed to save record: ${errorMessage}`, "error");
+    }
+  };
+
+  const deleteChildRecord = async (type, index) => {
+    if (!window.confirm('Are you sure you want to delete this record? This action cannot be undone.')) return;
+    
+    const payload = preparePayload();
+    if (payload[type] && payload[type][index]) {
+      payload[type].splice(index, 1);
+      
+      try {
+        const updated = await updateEmployee(employee.employee_id, payload);
+        setEmployee(updated.data || updated);
+        showToast(`${type.replace(/_/g, ' ')} deleted successfully!`, "success");
+      } catch (error) {
+        console.error('Error deleting record:', error);
+        const errorMessage = extractErrorMessage(error);
+        showToast(`Failed to delete record: ${errorMessage}`, "error");
+      }
+    }
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setCurrentChildType('');
+    setEditingIndex(null);
+    setChildForm({});
+  };
+
+  const renderChildSection = (records, title, type, columns, dataMapping) => {
+    const recordsArray = records || [];
+    const hasRecords = recordsArray.length > 0;
+
+    // Calculate remaining balance for medical details
+    let remainingBalance = null;
+    let totalUsed = 0;
+    let maxLimit = 0;
+    
+    if (type === 'medical_details' && hasRecords) {
+      const firstRecord = recordsArray[0];
+      totalUsed = recordsArray.reduce((sum, rec) => sum + parseFloat(rec.medical_used || 0), 0);
+      maxLimit = parseFloat(firstRecord.medical_max_limit || 0);
+      remainingBalance = maxLimit - totalUsed;
+    }
+
     return (
-      <div className="detail-loading">
-        <div className="loading-spinner"></div>
-        <p>Loading employee profile...</p>
+      <div className="child-section">
+        <div className="section-header">
+          <h3>{title}</h3>
+          {type === 'medical_details' && hasRecords && (
+            <div className="medical-summary">
+              <span className={`remaining-balance ${remainingBalance <= 0 ? 'exhausted' : ''}`}>
+                💰 Remaining Balance: ETB {remainingBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+              <span className="total-used">
+                | Total Claims: ETB {totalUsed.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+            </div>
+          )}
+          <button 
+            className="btn-create"
+            onClick={() => openModal(type)}
+            disabled={type === 'medical_details' && remainingBalance !== null && remainingBalance <= 0}
+            title={type === 'medical_details' && remainingBalance !== null && remainingBalance <= 0 ? "Medical claim exhausted - no balance remaining" : ""}
+          >
+            + Create {title}
+          </button>
+        </div>
+
+        {!hasRecords ? (
+          <div className="empty-state-mini">
+            <span className="empty-icon-mini">📋</span>
+            <p>No {title.toLowerCase()} records found</p>
+            <button 
+              className="btn-create-mini"
+              onClick={() => openModal(type)}
+            >
+              Create First Record
+            </button>
+          </div>
+        ) : (
+          <div className="table-responsive">
+            <table className="child-table">
+              <thead>
+                <tr>
+                  {columns.map(col => <th key={col}>{col}</th>)}
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recordsArray.map((rec, idx) => (
+                  <tr key={idx}>
+                    {columns.map(col => {
+                      const fieldName = dataMapping[col];
+                      let value = rec[fieldName];
+                      
+                      if (fieldName === 'medical_max_limit' || fieldName === 'medical_used' || fieldName === 'medica_remain') {
+                        value = value || value === 0 ? `ETB ${parseFloat(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '-';
+                      }
+                      else if ((fieldName === 'from_date' || fieldName === 'to_date' || fieldName === 'start_date' || 
+                                fieldName === 'end_date' || fieldName === 'date_of_incident' || fieldName === 'period'|| fieldName === 'medical_claim_date') && value) {
+                        value = new Date(value).toLocaleDateString();
+                      }
+                      else if (fieldName === 'score' && value) {
+                        value = `${parseFloat(value).toFixed(1)}%`;
+                      }
+                      else if (fieldName === 'number_of_days' && value) {
+                        value = `${parseFloat(value).toFixed(1)} days`;
+                      }
+                      
+                      return <td key={col}>{value || '-'}</td>;
+                    })}
+                    <td className="action-buttons-cell">
+                      <button 
+                        className="btn-edit-mini"
+                        onClick={() => openModal(type, idx)}
+                        title="Edit"
+                      >
+                        ✏️
+                      </button>
+                      <button 
+                        className="btn-delete-mini"
+                        onClick={() => deleteChildRecord(type, idx)}
+                        title="Delete"
+                      >
+                        🗑️
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     );
-  }
+  };
 
-  const StatusIcon = getStatusBadge(employee.status).icon;
+  if (loading) return (
+    <div className="loading-container">
+      <div className="loader"></div>
+      <p>Loading employee details...</p>
+    </div>
+  );
+  
+  if (error) return (
+    <div className="error-container">
+      <span className="error-icon">⚠️</span>
+      <div className="error-details">
+        <h3>Error Loading Employee</h3>
+        <p>{error}</p>
+        <button onClick={fetchEmployeeData} className="btn-retry">Try Again</button>
+      </div>
+    </div>
+  );
+  
+  if (!employee) return (
+    <div className="error-container">
+      <p>No employee found with ID: {id}</p>
+    </div>
+  );
 
   return (
-    <div className="employee-detail">
-      {/* Header with Gradient Background */}
-      <div className="detail-header">
-        <div className="header-content">
-          <div className="header-left">
-            <button className="back-button" onClick={() => navigate('/hr/employees')}>
-              <FiArrowLeft size={20} />
-            </button>
-            <div className="employee-avatar">
-              {employee.profileImage ? (
-                <img src={employee.profileImage} alt={employee.fullName} />
-              ) : (
-                <div className="avatar-placeholder">
-                  <span>{employee.firstName[0]}{employee.lastName[0]}</span>
-                </div>
-              )}
-            </div>
-            <div className="employee-title">
-              <h1>{employee.fullName}</h1>
-              <div className="title-meta">
-                <span className="employee-id">{employee.employeeId}</span>
-                <span className="dot">•</span>
-                <span className="employee-position">{employee.jobTitle}</span>
-              </div>
-            </div>
-          </div>
-          <div className="header-right">
-            <div className={`status-badge-large ${getStatusBadge(employee.status).class}`}>
-              <StatusIcon size={16} />
-              <span>{employee.status}</span>
-            </div>
-            <div className="action-group">
-              <button className="icon-button" onClick={() => window.print()}>
-                <FiPrinter size={18} />
-              </button>
-              <button className="icon-button" onClick={() => {}}>
-                <FiDownload size={18} />
-              </button>
-              <Link to={`/hr/employees/edit/${employee.id}`} className="icon-button edit">
-                <FiEdit2 size={18} />
-              </Link>
-              <button className="icon-button delete" onClick={() => setShowDeleteConfirm(true)}>
-                <FiTrash2 size={18} />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Quick Stats Cards */}
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #4f46e5, #818cf8)' }}>
-            <FiCalendar />
-          </div>
-          <div className="stat-info">
-            <span className="stat-label">Leave Days Used</span>
-            <span className="stat-value">{employee.totalLeavesTaken}</span>
-          </div>
-          {/* <div className="stat-trend positive">
-            <FiTrendingUp size={14} />
-            <span>12% vs avg</span>
-          </div> */}
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #10b981, #34d399)' }}>
-            <FiShield />
-          </div>
-          <div className="stat-info">
-            <span className="stat-label">Active Guarantees</span>
-            <span className="stat-value">{employee.activeGuarantees}</span>
-          </div>
-          {/* <div className="stat-trend neutral">
-            <span>All active</span>
-          </div> */}
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #f59e0b, #fbbf24)' }}>
-            <FiAlertTriangle />
-          </div>
-          <div className="stat-info">
-            <span className="stat-label">Disciplinary Records</span>
-            <span className="stat-value">{employee.disciplinaryCount}</span>
-          </div>
-          {/* <div className="stat-trend negative">
-            <FiTrendingUp size={14} />
-            <span>+1 this year</span>
-          </div> */}
-        </div>
-      </div>
-
-      {/* Tabs Navigation */}
-      <div className="tabs-container">
-        {tabs.map(tab => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              className={`tab-button ${isActive ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab.id)}
-              style={isActive ? { '--tab-color': tab.color } : {}}
-            >
-              <Icon size={18} />
-              <span>{tab.label}</span>
-              {isActive && <div className="tab-indicator" style={{ background: tab.color }} />}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Tab Content */}
-      <div className="tab-content">
-        {activeTab === 'overview' && (
-          <div className="overview-tab">
-            {/* Profile Information Cards */}
-            <div className="profile-grid">
-              {/* Personal Info Card */}
-              <div className="profile-card">
-                <div className="card-header">
-                  <FiUser className="header-icon" />
-                  <h3>Personal Information</h3>
-                </div>
-                <div className="card-content">
-                  <div className="info-row">
-                    <span className="info-label">Full Name</span>
-                    <span className="info-value">{employee.fullName}</span>
-                  </div>
-                  <div className="info-row">
-                    <span className="info-label">Date of Birth</span>
-                    <span className="info-value">
-                      {new Date(employee.dateOfBirth).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
-                    </span>
-                  </div>
-                  <div className="info-row">
-                    <span className="info-label">Gender</span>
-                    <span className="info-value">{employee.gender}</span>
-                  </div>
-                  <div className="info-row">
-                    <span className="info-label">Phone</span>
-                    <span className="info-value">
-                      <FiPhone size={14} />
-                      {employee.phone}
-                    </span>
-                  </div>
-                  <div className="info-row">
-                    <span className="info-label">Email</span>
-                    <span className="info-value">
-                      <FiMail size={14} />
-                      {employee.email}
-                    </span>
-                  </div>
-                  <div className="info-row">
-                    <span className="info-label">Address</span>
-                    <span className="info-value">
-                      <FiMapPin size={14} />
-                      {employee.address}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Emergency Contact Card */}
-              <div className="profile-card">
-                <div className="card-header">
-                  <FiPhone className="header-icon" />
-                  <h3>Emergency Contact</h3>
-                </div>
-                <div className="card-content">
-                  <div className="info-row">
-                    <span className="info-label">Name</span>
-                    <span className="info-value">{employee.id}</span>
-                  </div>
-                  <div className="info-row">
-                    <span className="info-label">Relationship</span>
-                    <span className="info-value">{employee.emergencyContactRelationship}</span>
-                  </div>
-                  <div className="info-row">
-                    <span className="info-label">Phone</span>
-                    <span className="info-value">
-                      <FiPhone size={14} />
-                      {employee.phone}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Employment Info Card */}
-              <div className="profile-card">
-                <div className="card-header">
-                  <FiBriefcase className="header-icon" />
-                  <h3>Employment Details</h3>
-                </div>
-                <div className="card-content">
-                  <div className="info-row">
-                    <span className="info-label">Job Title</span>
-                    <span className="info-value">{employee.jobTitle}</span>
-                  </div>
-                  <div className="info-row">
-                    <span className="info-label">Department</span>
-                    <span className="info-value">{employee.department}</span>
-                  </div>
-                  <div className="info-row">
-                    <span className="info-label">Location</span>
-                    <span className="info-value">{employee.location}</span>
-                  </div>
-                  <div className="info-row">
-                    <span className="info-label">Start Date</span>
-                    <span className="info-value">
-                        {employee?.startDate &&
-                            new Date(employee.startDate).toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric'
-                            })
-                    }
-                    </span>
-                  </div>
-                  {/* <div className="info-row">
-                    <span className="info-label">Employment Type</span>
-                    <span className="info-value">
-                      <span className="badge-light">{employee.employmentType}</span>
-                    </span>
-                  </div> */}
-                </div>
-              </div>
-
-              {/* Medical Allowance Card */}
-              <div className="profile-card">
-                <div className="card-header">
-                  <FiHeart className="header-icon" />
-                  <h3>Medical Allowance {employee.year}</h3>
-                  {employee.used >= 20000 && (
-                    <div className="warning-chip">
-                      <FiAlertTriangle size={14} />
-                      <span>Near Limit</span>
-                    </div>
-                  )}
-                </div>
-                <div className="card-content">
-                  <div className="allowance-grid">
-                    <div className="allowance-item">
-                      <span className="item-label">Max Limit</span>
-                      <span className="item-value">{employee.medicalMaxLimit.toLocaleString()} ETB</span>
-                    </div>
-                    <div className="allowance-item">
-                      <span className="item-label">Used</span>
-                      <span className="item-value used">{employee.medicalUsed.toLocaleString()} ETB</span>
-                    </div>
-                    <div className="allowance-item">
-                      <span className="item-label">Remaining</span>
-                      <span className="item-value remaining">{employee.medicalRemaining.toLocaleString()} ETB</span>
-                    </div>
-                  </div>
-                  <div className="progress-wrapper">
-                    <div className="progress-header">
-                      <span>Usage Progress</span>
-                      <span className="progress-percentage">
-                        {((employee.medicalUsed / employee.medicalMaxLimit) * 100).toFixed(1)}%
-                      </span>
-                    </div>
-                    <div className="progress-track">
-                      <div 
-                        className={`progress-fill ${
-                          (employee.medicalUsed / employee.medicalMaxLimit) > 0.9 
-                            ? 'danger' 
-                            : (employee.medicalUsed / employee.medicalMaxLimit) > 0.7 
-                            ? 'warning' 
-                            : 'success'
-                        }`}
-                        style={{ 
-                          width: `${(employee.medicalUsed / employee.medicalMaxLimit) * 100}%` 
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Education Card
-              <div className="profile-card full-width">
-                <div className="card-header">
-                  <FiBookOpen className="header-icon" />
-                  <h3>Education</h3>
-                </div>
-                <div className="card-content">
-                  {employee.education.map((edu, index) => (
-                    <div key={index} className="education-item">
-                      <div className="edu-header">
-                        <span className="edu-degree">{edu.degree}</span>
-                        <span className="edu-year">{edu.year}</span>
-                      </div>
-                      <div className="edu-field">{edu.field}</div>
-                      <div className="edu-institution">{edu.institution}</div>
-                    </div>
-                  ))}
-                </div>
-              </div> */}
-
-              {/* Certificates Card
-              {employee.certificates.length > 0 && (
-                <div className="profile-card full-width">
-                  <div className="card-header">
-                    <FiAward className="header-icon" />
-                    <h3>Certificates</h3>
-                  </div>
-                  <div className="card-content">
-                    {employee.certificates.map((cert, index) => (
-                      <div key={index} className="certificate-item">
-                        <div className="cert-header">
-                          <FiAward className="cert-icon" />
-                          <div className="cert-info">
-                            <span className="cert-name">{cert.name}</span>
-                            <span className="cert-issuer">{cert.issuedBy}</span>
-                          </div>
-                        </div>
-                        <div className="cert-dates">
-                          <div className="date-badge">
-                            <FiCalendar size={12} />
-                            <span>Issued: {new Date(cert.issueDate).toLocaleDateString()}</span>
-                          </div>
-                          <div className="date-badge">
-                            <FiClock size={12} />
-                            <span>Expires: {new Date(cert.expiryDate).toLocaleDateString()}</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )} */}
-
-              {/* Leave Summary Card
-              <div className="profile-card">
-                <div className="card-header">
-                  <FiCalendar className="header-icon" />
-                  <h3>Leave Summary</h3>
-                </div>
-                <div className="card-content">
-                  <div className="leave-summary">
-                    <div className="leave-stat">
-                      <span className="stat-name">Annual</span>
-                      <span className="stat-numbers">{employee.annual.used}/{employee.leaveStats.annual.total}</span>
-                    </div>
-                    <div className="leave-stat">
-                      <span className="stat-name">Sick</span>
-                      <span className="stat-numbers">{employee.sick.used}/{employee.leaveStats.sick.total}</span>
-                    </div>
-                    <div className="leave-stat">
-                      <span className="stat-name">Maternity/Paternity</span>
-                      <span className="stat-numbers">{employee.maternity.used}/{employee.leaveStats.maternity.total}</span>
-                    </div>
-                    <div className="leave-stat">
-                      <span className="stat-name">Compassionate</span>
-                      <span className="stat-numbers">{employee.compassionate.used}/{employee.leaveStats.compassionate.total}</span>
-                    </div>
-                    <div className="leave-stat">
-                      <span className="stat-name">Unpaid</span>
-                      <span className="stat-numbers">{employee.unpaid.used}</span>
-                    </div>
-                  </div>
-                </div>
-              </div> */}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'leave' && (
-          <EmployeeLeaveTab employeeId={employee.id} leaveStats={employee.leaveStats} />
-        )}
-
-        {activeTab === 'medical' && (
-          <EmployeeMedicalTab 
-            employeeId={employee.id} 
-            medicalData={employee.medicalAllowance}
-          />
-        )}
-
-        {activeTab === 'guarantee' && (
-          <EmployeeGuaranteeTab 
-            employeeId={employee.id}
-            guarantees={employee.guarantees}
-          />
-        )}
-
-        {activeTab === 'disciplinary' && (
-          <EmployeeDisciplinaryTab 
-            employeeId={employee.id}
-            disciplinary={employee.disciplinary}
-          />
-        )}
-      </div>
-
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <div className="modal-icon warning">
-              <FiAlertTriangle size={32} />
-            </div>
-            <h3>Delete Employee</h3>
-            <p>Are you sure you want to delete {employee.fullName}? This action cannot be undone.</p>
-            <div className="modal-actions">
-              <button className="btn-secondary" onClick={() => setShowDeleteConfirm(false)}>
-                Cancel
-              </button>
-              <button className="btn-danger" onClick={() => {
-                console.log('Deleting employee:', id);
-                setShowDeleteConfirm(false);
-                navigate('/hr/employees');
-              }}>
-                Yes, Delete
-              </button>
-            </div>
+    <div className="employee-detail-container">
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`toast toast-${toast.type}`}>
+          <div className="toast-content">
+            <span className="toast-icon">
+              {toast.type === 'success' ? '✅' : '❌'}
+            </span>
+            <span className="toast-message">{toast.message}</span>
           </div>
         </div>
       )}
+
+      <div className="detail-wrapper">
+        {/* Header */}
+        <div className="detail-header">
+          <div className="header-left">
+            <h1>Employee Details</h1>
+            <p>View and manage employee information</p>
+          </div>
+          <div className="employee-status-badge">
+            <span className={`status-badge-large status-${employee.status?.toLowerCase().replace(/ /g, '-')}`}>
+              {employee.status}
+            </span>
+          </div>
+        </div>
+
+        {/* Main Info Grid */}
+        <div className="info-grid">
+          {/* Personal Info Card */}
+          <div className="info-card">
+            <div className="card-header">
+              <span className="card-icon">👤</span>
+              <h3>Personal Information</h3>
+            </div>
+            <div className="card-content">
+              <div className="info-row">
+                <span className="info-label">Employee ID:</span>
+                <span className="info-value employee-id-badge">{employee.employee_id}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Full Name:</span>
+                <span className="info-value">{employee.first_name} {employee.last_name}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Date of Birth:</span>
+                <span className="info-value">{employee.date_of_birth ? new Date(employee.date_of_birth).toLocaleDateString() : '-'}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Gender:</span>
+                <span className="info-value">{employee.gender || '-'}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Phone:</span>
+                <span className="info-value">{employee.phone || '-'}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Email:</span>
+                <span className="info-value">{employee.email || '-'}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Address:</span>
+                <span className="info-value">{employee.address || '-'}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Employment Info Card */}
+          <div className="info-card">
+            <div className="card-header">
+              <span className="card-icon">💼</span>
+              <h3>Employment Information</h3>
+            </div>
+            <div className="card-content">
+              <div className="info-row">
+                <span className="info-label">Job Title:</span>
+                <span className="info-value">{employee.job_title || '-'}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Department:</span>
+                <span className="info-value">{employee.department || '-'}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Location:</span>
+                <span className="info-value">{employee.location || '-'}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Start Date:</span>
+                <span className="info-value">{employee.employment_start_date ? new Date(employee.employment_start_date).toLocaleDateString() : '-'}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">End Date:</span>
+                <span className="info-value">{employee.employment_end_date ? new Date(employee.employment_end_date).toLocaleDateString() : '-'}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Project:</span>
+                <span className="info-value project-badge">{employee.project || '-'}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Emergency Contact Card */}
+          <div className="info-card">
+            <div className="card-header">
+              <span className="card-icon">🚨</span>
+              <h3>Emergency Contact</h3>
+            </div>
+            <div className="card-content">
+              <div className="info-row">
+                <span className="info-label">Contact Name:</span>
+                <span className="info-value">{employee.emergency_contact_name || '-'}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Relationship:</span>
+                <span className="info-value">{employee.emergency_contact_relationship || '-'}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Phone:</span>
+                <span className="info-value">{employee.emergency_contact_phone || '-'}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Child Records Sections */}
+        <div className="child-sections">
+          {/* Leave Details */}
+          {renderChildSection(
+            employee.leave_details,
+            'Leave Details',
+            'leave_details',
+            ['From Date', 'To Date', 'Leave Type', 'Number of Days', 'Reason', 'Status'],
+            {
+              'From Date': 'from_date',
+              'To Date': 'to_date',
+              'Leave Type': 'leave_type',
+              'Number of Days': 'number_of_days',
+              'Reason': 'reason',
+              'Status': 'status'
+            }
+          )}
+
+          {/* Disciplinary Records */}
+          {renderChildSection(
+            employee.disciplinary_records,
+            'Disciplinary Records',
+            'disciplinary_records',
+            ['Date of Incident', 'Incident Type', 'Severity', 'Action Taken', 'Remarks', 'Status'],
+            {
+              'Date of Incident': 'date_of_incident',
+              'Incident Type': 'incident_type',
+              'Severity': 'severity',
+              'Action Taken': 'action_taken',
+              'Remarks': 'remarks',
+              'Status': 'status'
+            }
+          )}
+
+          {/* Guarantees */}
+          {renderChildSection(
+            employee.guarantees,
+            'Guarantees',
+            'guarantees',
+            ['Guaranteed Employee', 'Guarantee Type', 'Start Date', 'End Date', 'Status', 'Remarks'],
+            {
+              'Guaranteed Employee': 'guaranted_employee',
+              'Guarantee Type': 'guaranteetype',
+              'Start Date': 'start_date',
+              'End Date': 'end_date',
+              'Status': 'status',
+              'Remarks': 'remarks'
+            }
+          )}
+
+          {/* Medical Details */}
+          {renderChildSection(
+            employee.medical_details,
+            'Medical Details',
+            'medical_details',
+            ['Medical Year',"Claim Date", 'Medical Max Limit', 'Medical Used', 'Medical Remain'],
+            {
+              'Medical Year': 'medical_year',
+              'Claim Date': 'medical_claim_date',
+              'Medical Max Limit': 'medical_max_limit',
+              'Medical Used': 'medical_used',
+              'Medical Remain': 'medica_remain'
+            }
+          )}
+
+          {/* Performance Records */}
+          {renderChildSection(
+            employee.performance_records,
+            'Performance Records',
+            'performance_records',
+            ['Period', 'Score', 'Rating', 'Remarks'],
+            {
+              'Period': 'period',
+              'Score': 'score',
+              'Rating': 'rating',
+              'Remarks': 'remarks'
+            }
+          )}
+        </div>
+
+        {/* Modal for Create/Edit */}
+        {modalOpen && (
+          <div className="modal-overlay" onClick={closeModal}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h3>{editingIndex !== null ? 'Edit' : 'Create'} {currentChildType.replace(/_/g, ' ')}</h3>
+                <button className="modal-close" onClick={closeModal}>✕</button>
+              </div>
+              <div className="modal-body">
+                {/* Leave Details Form */}
+                {currentChildType === 'leave_details' && (
+                  <div className="form-group">
+                    <label>From Date *</label>
+                    <input type="date" name="from_date" value={childForm.from_date || ''} onChange={handleChildChange} />
+                    
+                    <label>To Date *</label>
+                    <input type="date" name="to_date" value={childForm.to_date || ''} onChange={handleChildChange} />
+                    
+                    <label>Leave Type *</label>
+                    <select name="leave_type" value={childForm.leave_type || ''} onChange={handleChildChange}>
+                      <option value="">Select Leave Type</option>
+                      {leaveTypeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                    </select>
+                    
+                    <label>Number of Days *</label>
+                    <input type="number" step="0.5" name="number_of_days" value={childForm.number_of_days || ''} onChange={handleChildChange} />
+                    
+                    <label>Reason</label>
+                    <textarea name="reason" rows="3" value={childForm.reason || ''} onChange={handleChildChange} placeholder="Reason for leave"></textarea>
+                    
+                    <label>Status</label>
+                    <select name="status" value={childForm.status || ''} onChange={handleChildChange}>
+                      {leaveStatusOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                    </select>
+                  </div>
+                )}
+
+                {/* Disciplinary Records Form */}
+                {currentChildType === 'disciplinary_records' && (
+                  <div className="form-group">
+                    <label>Date of Incident *</label>
+                    <input type="date" name="date_of_incident" value={childForm.date_of_incident || ''} onChange={handleChildChange} />
+                    
+                    <label>Incident Type *</label>
+                    <select name="incident_type" value={childForm.incident_type || ''} onChange={handleChildChange}>
+                      <option value="">Select Incident Type</option>
+                      {incidentTypeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                    </select>
+                    
+                    <label>Severity *</label>
+                    <select name="severity" value={childForm.severity || ''} onChange={handleChildChange}>
+                      <option value="">Select Severity</option>
+                      {severityOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                    </select>
+                    
+                    <label>Action Taken</label>
+                    <textarea name="action_taken" rows="3" value={childForm.action_taken || ''} onChange={handleChildChange} placeholder="Action taken against employee"></textarea>
+                    
+                    <label>Remarks</label>
+                    <textarea name="remarks" rows="3" value={childForm.remarks || ''} onChange={handleChildChange} placeholder="Additional remarks"></textarea>
+                    
+                    <label>Status</label>
+                    <select name="status" value={childForm.status || ''} onChange={handleChildChange}>
+                      {incidentStatusOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                    </select>
+                  </div>
+                )}
+
+                {/* Guarantees Form */}
+                {currentChildType === 'guarantees' && (
+                  <div className="form-group">
+                    <label>Guaranteed Employee *</label>
+                    <input 
+                      type="text" 
+                      name="guaranted_employee" 
+                      placeholder="Employee ID or Name" 
+                      value={childForm.guaranted_employee || ''} 
+                      onChange={handleChildChange}
+                      readOnly={!editingIndex && childForm.guaranted_employee === employee?.employee_id}
+                      className={!editingIndex && childForm.guaranted_employee === employee?.employee_id ? 'disabled-input' : ''}
+                    />
+                    {!editingIndex && childForm.guaranted_employee === employee?.employee_id && (
+                      <small className="field-hint">Auto-populated with current employee ID</small>
+                    )}
+                    
+                    <label>Guarantee Type *</label>
+                    <select name="guaranteetype" value={childForm.guaranteetype || ''} onChange={handleChildChange}>
+                      <option value="">Select Guarantee Type</option>
+                      {guaranteeTypeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                    </select>
+                    
+                    <label>Start Date</label>
+                    <input type="date" name="start_date" value={childForm.start_date || ''} onChange={handleChildChange} />
+                    
+                    <label>End Date</label>
+                    <input type="date" name="end_date" value={childForm.end_date || ''} onChange={handleChildChange} />
+                    
+                    <label>Status</label>
+                    <select name="status" value={childForm.status || ''} onChange={handleChildChange}>
+                      {guaranteeStatusOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                    </select>
+                    
+                    <label>Remarks</label>
+                    <textarea name="remarks" rows="3" value={childForm.remarks || ''} onChange={handleChildChange} placeholder="Additional remarks"></textarea>
+                  </div>
+                )}
+
+                {/* Medical Details Form */}
+                {currentChildType === 'medical_details' && (
+                  <div className="form-group">
+                    <label>Medical Year *</label>
+                    <input type="number" name="medical_year" value={childForm.medical_year || ''} onChange={handleChildChange} />
+                    <label>Medical Claim Date *</label>
+                      <input 
+                        type="date" 
+                        name="medical_claim_date" 
+                        value={childForm.medical_claim_date || new Date().toISOString().split('T')[0]} 
+                        onChange={handleChildChange}
+                        max={new Date().toISOString().split('T')[0]} // Prevent future dates
+                      />
+                      <small className="field-hint">Date when the medical claim was made</small>
+                    
+                    {/* Only show Medical Max Limit field if no records exist yet */}
+                    {(!employee?.medical_details || employee.medical_details.length === 0) && editingIndex === null && (
+                      <>
+                        <label>Medical Max Limit (ETB) * (Set once - cannot be changed later)</label>
+                        <input 
+                          type="number" 
+                          step="0.01" 
+                          name="medical_max_limit" 
+                          value={childForm.medical_max_limit || ''} 
+                          onChange={handleChildChange}
+                          placeholder="Enter maximum medical claim limit"
+                          required
+                        />
+                        <small className="field-hint">⚠️ This value can only be set once and cannot be modified after the first medical record</small>
+                      </>
+                    )}
+                    
+                    {/* Show read-only max limit if records exist */}
+                    {employee?.medical_details && employee.medical_details.length > 0 && (
+                      <>
+                        <label>Medical Max Limit (ETB) (Read-only)</label>
+                        <input 
+                          type="number" 
+                          step="0.01" 
+                          name="medical_max_limit" 
+                          value={childForm.medical_max_limit || employee.medical_details[0].medical_max_limit} 
+                          disabled 
+                          readOnly
+                          className="disabled-input"
+                        />
+                        <small className="field-hint">Medical max limit was set to ETB {parseFloat(childForm.medical_max_limit || employee.medical_details[0].medical_max_limit).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} and cannot be changed</small>
+                      </>
+                    )}
+                    
+                    {/* For editing existing records, also show read-only max limit */}
+                    {editingIndex !== null && employee?.medical_details && employee.medical_details.length > 0 && (
+                      <>
+                        <label>Medical Max Limit (ETB) (Read-only)</label>
+                        <input 
+                          type="number" 
+                          step="0.01" 
+                          name="medical_max_limit" 
+                          value={childForm.medical_max_limit} 
+                          disabled 
+                          readOnly
+                          className="disabled-input"
+                        />
+                        <small className="field-hint">Medical max limit cannot be changed once set</small>
+                      </>
+                    )}
+                    
+                    <label>Medical Claim Amount (ETB)</label>
+                    <input 
+                      type="number" 
+                      step="0.01" 
+                      name="medical_used" 
+                      value={childForm.medical_used || 0} 
+                      onChange={handleChildChange}
+                      placeholder="Enter claim amount"
+                    />
+                    <small className="field-hint">Enter the claim amount to deduct from your medical balance</small>
+                    
+                    <label>Remaining Balance (ETB) - Auto-calculated</label>
+                    <input 
+                      type="number" 
+                      step="0.01" 
+                      name="medica_remain" 
+                      value={(() => {
+                        // Calculate remaining balance properly
+                        if (childForm.medica_remain !== undefined && childForm.medica_remain !== '') {
+                          return childForm.medica_remain;
+                        }
+                        
+                        let maxLimit = 0;
+                        let totalUsed = parseFloat(childForm.medical_used || 0);
+                        
+                        if (employee?.medical_details && employee.medical_details.length > 0) {
+                          maxLimit = parseFloat(employee.medical_details[0].medical_max_limit);
+                          // Sum all previous claims except the one being edited
+                          totalUsed += employee.medical_details.reduce((sum, record, idx) => {
+                            if (editingIndex !== idx) {
+                              return sum + parseFloat(record.medical_used || 0);
+                            }
+                            return sum;
+                          }, 0);
+                        } else if (childForm.medical_max_limit) {
+                          maxLimit = parseFloat(childForm.medical_max_limit);
+                        }
+                        
+                        return (maxLimit - totalUsed).toFixed(2);
+                      })()} 
+                      readOnly 
+                      disabled 
+                      className="disabled-input" 
+                    />
+                    <small className="field-hint">Automatically calculated as Max Limit - Total Claims</small>
+                  </div>
+                )}
+
+                {/* Performance Records Form */}
+                {currentChildType === 'performance_records' && (
+                  <div className="form-group">
+                    <label>Period *</label>
+                    <input type="date" name="period" value={childForm.period || ''} onChange={handleChildChange} />
+                    
+                    <label>Score * (0-100)</label>
+                    <input type="number" step="0.1" min="0" max="100" name="score" value={childForm.score || ''} onChange={handleChildChange} />
+                    
+                    <label>Rating</label>
+                    <select name="rating" value={childForm.rating || ''} onChange={handleChildChange}>
+                      <option value="">Select Rating</option>
+                      {ratingOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                    </select>
+                    
+                    <label>Remarks</label>
+                    <textarea name="remarks" rows="3" value={childForm.remarks || ''} onChange={handleChildChange} placeholder="Performance remarks"></textarea>
+                  </div>
+                )}
+              </div>
+              <div className="modal-footer">
+                <button className="btn-cancel" onClick={closeModal}>Cancel</button>
+                <button className="btn-save" onClick={saveChildRecord}>Save</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

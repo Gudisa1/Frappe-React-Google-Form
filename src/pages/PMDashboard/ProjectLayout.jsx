@@ -77,6 +77,9 @@ const ProjectLayout = () => {
   const navigationItems = [
     { path: '/project-dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/submission-list', label: 'Submissions', icon: FileText },
+     { path: '/project-stat', label: 'Project General Stat', icon: FileText },
+     { path: '/project-general', label: 'Project General Stat Update', icon: FileText },
+
   ];
 
   const handleNavigation = (path) => {

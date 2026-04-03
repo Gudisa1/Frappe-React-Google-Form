@@ -389,6 +389,7 @@ const ProjectList = () => {
     });
   };
 
+
   if (loading) {
     return (
       <div className="project-list-container">
@@ -527,13 +528,14 @@ const ProjectList = () => {
                       <th>Region</th>
                       <th>District</th>
                       <th>Start Date</th>
+                      <th>Middle Date</th>
                       <th>End Date</th>
                       <th>Description</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {paginatedProjects.map((p) => (
+                    {/* {paginatedProjects.map((p) => (
                       <tr key={p.name}>
                         <td>
                           <div className="truncate-text" title={p.project_name}>
@@ -554,6 +556,9 @@ const ProjectList = () => {
                         <td>{p.region}</td>
                         <td>{p.district}</td>
                         <td className="date-cell">{formatDate(p.start_date)}</td>
+                        <td className={`date-cell ${isRedFlag ? "red-flag" : ""}`}>
+                          {formatDate(middleDate)}
+                        </td>
                         <td className="date-cell">{formatDate(p.end_date)}</td>
                         <td>
                           <div className="truncate-text" title={p.description}>
@@ -586,7 +591,61 @@ const ProjectList = () => {
                           </div>
                         </td>
                       </tr>
-                    ))}
+                    ))} */}
+                    {paginatedProjects.map((p) => {
+  const startDate = new Date(p.start_date);
+  const endDate = new Date(p.end_date);
+
+  // ✅ Middle date
+  const middleDate = new Date(
+    (startDate.getTime() + endDate.getTime()) / 2
+  );
+
+  // ✅ Red flag logic
+  const today = new Date();
+  const twoMonthsFromNow = new Date();
+  twoMonthsFromNow.setMonth(today.getMonth() + 2);
+
+  const isRedFlag =
+    middleDate > today && middleDate <= twoMonthsFromNow;
+
+  return (
+    <tr key={p.name}>
+      <td>{p.project_name}</td>
+      <td>{p.project_code}</td>
+      <td>{p.project_manager}</td>
+
+      <td>
+        <span className={getStatusBadgeClass(p.status)}>
+          {p.status || "Unknown"}
+        </span>
+      </td>
+
+      <td>{p.region}</td>
+      <td>{p.district}</td>
+
+      <td className="date-cell">{formatDate(startDate)}</td>
+
+      {/* ✅ FIXED MIDDLE DATE CELL */}
+      <td className={`date-cell ${isRedFlag ? "red-flag" : ""}`}>
+        {formatDate(middleDate)}
+        {isRedFlag && <span style={{ marginLeft: "6px" }}>🚩</span>}
+      </td>
+
+      <td className="date-cell">{formatDate(endDate)}</td>
+
+      <td>{p.description || "-"}</td>
+
+      <td>
+        <div className="action-buttons">
+          <button onClick={() => handleView(p)}>👁️</button>
+          <button onClick={() => handleEdit(p.project_name)}>✏️</button>
+          <button onClick={() => handleDeleteClick(p.name)}>🗑️</button>
+        </div>
+      </td>
+    </tr>
+  );
+})}
                   </tbody>
                 </table>
               </div>
@@ -865,7 +924,7 @@ const ProjectList = () => {
       )}
 
       {/* Add pulse animation style */}
-      <style jsx>{`
+      <style >{`
         @keyframes pulse {
           0%, 100% { 
             opacity: 1;
